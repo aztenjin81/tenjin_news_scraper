@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, HttpUrl
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from tenjin.api.deps import SessionDep
 from tenjin.models import Article, Topic, TopicMatch
@@ -40,8 +40,14 @@ async def list_articles(
     session: SessionDep,
     topic: str | None = Query(default=None, description="Topic slug to filter by"),
     limit: int = Query(default=50, ge=1, le=200),
-    before: datetime | None = Query(default=None, description="Cursor: fetched_at upper bound"),
+    before: datetime | None = Query(default=None, description="Cursor: display-time upper bound"),
 ) -> list[ArticleOut]:
+    # Display order: most-recently-published first, falling back to fetched time
+    # when the feed didn't supply a pubDate. Sorting by fetched_at alone clusters
+    # results by feed (the scheduler processes feeds sequentially, so each feed's
+    # items share a fetched_at within microseconds of each other).
+    display_at = func.coalesce(Article.published_at, Article.fetched_at)
+
     stmt = select(Article)
 
     if topic:
@@ -52,9 +58,9 @@ async def list_articles(
         )
 
     if before:
-        stmt = stmt.where(Article.fetched_at < before)
+        stmt = stmt.where(display_at < before)
 
-    stmt = stmt.order_by(Article.fetched_at.desc()).limit(limit)
+    stmt = stmt.order_by(display_at.desc()).limit(limit)
 
     rows = (await session.execute(stmt)).scalars().all()
     now = datetime.now(UTC)
