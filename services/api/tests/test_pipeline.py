@@ -128,6 +128,61 @@ async def test_persist_creates_topic_matches():
         assert "iran-us" in matches
 
 
+async def test_articles_sorted_by_published_then_fetched():
+    """Regression: the API must order by COALESCE(published_at, fetched_at)
+    so feeds processed sequentially don't cluster by source on the page."""
+    from datetime import timedelta
+
+    from fastapi.testclient import TestClient
+
+    from tenjin.api.app import app
+
+    await install_topics()
+    presets.install()
+
+    base = datetime.now(UTC) - timedelta(hours=2)
+    # Note: feed A's items are persisted FIRST (so smaller fetched_at) but have
+    # OLDER published_at; feed B's items are persisted SECOND but PUBLISHED
+    # earlier. Correct behavior: results ordered purely by published_at desc.
+    feed_a_items = [
+        RawItem(
+            url=f"https://a.example.com/{i}",
+            title=f"Feed A item {i}",
+            outlet="Feed A",
+            source_kind="wire",
+            published_at=base + timedelta(minutes=i),
+        )
+        for i in range(3)
+    ]
+    feed_b_items = [
+        RawItem(
+            url=f"https://b.example.com/{i}",
+            title=f"Feed B item {i}",
+            outlet="Feed B",
+            source_kind="wire",
+            published_at=base + timedelta(minutes=10 + i),
+        )
+        for i in range(3)
+    ]
+    async with SessionLocal() as session:
+        await persist_items(session, feed_a_items)
+        await persist_items(session, feed_b_items)
+
+    with TestClient(app) as client:
+        rows = client.get("/articles").json()
+        titles = [r["title"] for r in rows]
+        # Must be interleaved by published_at, not grouped by outlet
+        # Expected order: B2, B1, B0, A2, A1, A0
+        assert titles == [
+            "Feed B item 2",
+            "Feed B item 1",
+            "Feed B item 0",
+            "Feed A item 2",
+            "Feed A item 1",
+            "Feed A item 0",
+        ], f"got {titles}"
+
+
 async def test_persist_skips_items_without_url_or_title():
     await install_topics()
     presets.install()
