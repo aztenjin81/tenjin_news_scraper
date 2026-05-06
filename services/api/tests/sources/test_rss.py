@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pytest_httpx import HTTPXMock
 
-from tenjin.sources.rss import RssAdapter, _DEFAULT_UA
+from tenjin.sources.rss import _DEFAULT_UA, RssAdapter
 
 FIXTURES = Path(__file__).parent / "fixtures" / "rss"
 FEED_URL = "https://www.reddit.com/r/worldnews/.rss"
