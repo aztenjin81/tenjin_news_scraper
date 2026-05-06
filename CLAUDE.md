@@ -31,9 +31,11 @@ Each package has its own `CLAUDE.md` with package-specific conventions. **Read i
 
 ## Local dev
 
+In this environment the docker daemon socket is root-owned, so `docker` needs `sudo` (passwordless sudo is configured — no prompt).
+
 ```bash
 # Bring up Postgres + Redis
-docker compose -f infra/docker-compose.yml up -d
+sudo docker compose -f infra/docker-compose.yml up -d
 
 # Backend (in one terminal)
 cd services/api
