@@ -2,8 +2,12 @@ import { TOPICS } from "@/lib/topics";
 import { TopicTile } from "@/components/TopicTile";
 import { SearchBar } from "@/components/SearchBar";
 import { Ticker } from "@/components/Ticker";
+import { getQuotes } from "@/lib/quotes";
 
-export default function HomePage() {
+export const revalidate = 30;
+
+export default async function HomePage() {
+  const initialQuotes = await getQuotes();
   return (
     <div className="space-y-10">
       <section className="grid items-start gap-12 lg:grid-cols-[1fr_220px]">
@@ -32,7 +36,7 @@ export default function HomePage() {
           </div>
         </div>
         <div>
-          <Ticker />
+          <Ticker initial={initialQuotes} />
         </div>
       </section>
 
