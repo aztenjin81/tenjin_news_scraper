@@ -32,6 +32,7 @@ export type Article = {
   lang?: string | null;
   topics?: string[];
   is_breaking?: boolean;
+  paywall?: boolean;
 };
 
 export async function getTopic(slug: string): Promise<Topic | null> {

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Index, String, Text
+from sqlalchemy import Boolean, DateTime, Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -28,3 +28,4 @@ class Article(Base, Timestamped):
     body: Mapped[str | None] = mapped_column(Text)
     snippet: Mapped[str | None] = mapped_column(Text)
     lang: Mapped[str | None] = mapped_column(String(8))
+    paywall: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

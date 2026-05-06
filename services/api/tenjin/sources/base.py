@@ -11,6 +11,7 @@ class RawItem:
     title: str
     outlet: str
     source_kind: str = "wire"  # wire | regional | primary | social | analysis | state
+    paywall: bool = False  # source is known-paywalled (hard or metered)
     published_at: datetime | None = None
     author: str | None = None
     body: str | None = None

@@ -19,6 +19,18 @@ export function ArticleRow({ article }: Props) {
             New
           </span>
         ) : null}
+        {article.paywall ? (
+          <span
+            className="rounded border px-1.5 py-px text-[10px] font-medium uppercase tracking-wider"
+            style={{
+              color: "var(--muted)",
+              borderColor: "var(--muted)",
+            }}
+            title="Source uses a paywall — full article may require subscription"
+          >
+            Paywall
+          </span>
+        ) : null}
       </div>
       <a
         href={article.url}

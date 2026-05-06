@@ -25,8 +25,8 @@ def _reddit(slug: str) -> RssAdapter:
     )
 
 
-def _rss(name: str, url: str, outlet: str, kind: str) -> RssAdapter:
-    return RssAdapter(name=name, feed_url=url, outlet=outlet, source_kind=kind)
+def _rss(name: str, url: str, outlet: str, kind: str, *, paywall: bool = False) -> RssAdapter:
+    return RssAdapter(name=name, feed_url=url, outlet=outlet, source_kind=kind, paywall=paywall)
 
 
 FEEDS = [
@@ -42,18 +42,8 @@ FEEDS = [
     _reddit("environment"),
     _reddit("climate"),
     # ── Wire (international news agencies) ────────────────────────────────────
-    _rss(
-        "bbc-world",
-        "https://feeds.bbci.co.uk/news/world/rss.xml",
-        "BBC World",
-        "wire",
-    ),
-    _rss(
-        "bbc-middle-east",
-        "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",
-        "BBC Middle East",
-        "wire",
-    ),
+    # BBC removed — international users hit a paid wall on bbc.com for many
+    # articles even though the RSS endpoint is public.
     _rss(
         "ap-world",
         "https://apnews.com/index.rss",
@@ -72,12 +62,14 @@ FEEDS = [
         "https://www.timesofisrael.com/feed/",
         "Times of Israel",
         "regional",
+        paywall=True,  # metered — most readers hit the wall after a few articles
     ),
     _rss(
         "haaretz",
         "https://www.haaretz.com/srv/htz-latest-headlines",
         "Haaretz",
         "regional",
+        paywall=True,  # hard paywall after the lede
     ),
     _rss(
         "arab-news",
@@ -97,6 +89,7 @@ FEEDS = [
         "https://kyivindependent.com/feed/",
         "Kyiv Independent",
         "regional",
+        paywall=True,  # metered — soft wall on long-form pieces
     ),
     _rss(
         "ukrainska-pravda",
@@ -122,6 +115,7 @@ FEEDS = [
         "https://www.themoscowtimes.com/rss/news",
         "Moscow Times",
         "regional",
+        paywall=True,  # some long-form pieces are subscriber-only
     ),
     # Central / Eastern Europe
     _rss(
@@ -165,12 +159,8 @@ FEEDS = [
         "RT",
         "state",
     ),
-    _rss(
-        "xinhua",
-        "http://www.xinhuanet.com/english/rss/worldrss.xml",
-        "Xinhua",
-        "state",
-    ),
+    # Xinhua removed — public RSS endpoint emits articles dated as far back
+    # as 2017 with stale URLs that 404. Re-add if/when they ship a real feed.
     _rss(
         "al-mayadeen",
         "https://english.almayadeen.net/rss",

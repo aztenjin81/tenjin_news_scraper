@@ -195,3 +195,83 @@ async def test_persist_skips_items_without_url_or_title():
         assert new == 0
         rows = (await session.execute(select(Article))).scalars().all()
         assert rows == []
+
+
+async def test_persist_drops_items_older_than_max_age():
+    """Stale RSS feeds (e.g. dead Xinhua endpoint) emit articles from years
+    ago. Pipeline must drop anything older than 30 days."""
+    from datetime import timedelta
+
+    from tenjin.pipeline.persist import MAX_AGE
+
+    await install_topics()
+    presets.install()
+
+    fresh = datetime.now(UTC) - timedelta(days=1)
+    ancient = datetime.now(UTC) - (MAX_AGE + timedelta(days=1))
+    items = [
+        RawItem(
+            url="https://example.com/fresh",
+            title="Fresh story",
+            outlet="x",
+            published_at=fresh,
+        ),
+        RawItem(
+            url="https://example.com/ancient",
+            title="Ancient story from 2017",
+            outlet="x",
+            published_at=ancient,
+        ),
+    ]
+    async with SessionLocal() as session:
+        new = await persist_items(session, items)
+        assert new == 1
+        urls = (await session.execute(select(Article.canonical_url))).scalars().all()
+        assert urls == ["https://example.com/fresh"]
+
+
+async def test_prune_old_articles_deletes_stale_rows():
+    """Cleanup helper drops articles older than MAX_AGE."""
+    from datetime import timedelta
+
+    from tenjin.pipeline.persist import MAX_AGE
+    from tenjin.pipeline.prune import prune_old_articles
+
+    await install_topics()
+    presets.install()
+
+    fresh = datetime.now(UTC) - timedelta(days=1)
+    ancient = datetime.now(UTC) - (MAX_AGE + timedelta(days=10))
+
+    # Bypass persist_items' own age filter by inserting directly via the model
+    async with SessionLocal() as session:
+        session.add(
+            Article(
+                url="https://example.com/x",
+                canonical_url="https://example.com/x",
+                title="Stale row already in DB",
+                outlet="x",
+                source_kind="wire",
+                published_at=ancient,
+                fetched_at=fresh,
+            )
+        )
+        session.add(
+            Article(
+                url="https://example.com/y",
+                canonical_url="https://example.com/y",
+                title="Recent row",
+                outlet="x",
+                source_kind="wire",
+                published_at=fresh,
+                fetched_at=fresh,
+            )
+        )
+        await session.commit()
+
+    deleted = await prune_old_articles()
+    assert deleted == 1
+
+    async with SessionLocal() as session:
+        urls = (await session.execute(select(Article.canonical_url))).scalars().all()
+        assert urls == ["https://example.com/y"]

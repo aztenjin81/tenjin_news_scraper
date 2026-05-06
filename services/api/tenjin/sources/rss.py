@@ -23,6 +23,7 @@ class RssAdapter(SourceAdapter):
     feed_url: str
     outlet: str
     source_kind: str = "wire"
+    paywall: bool = False
     user_agent: str = _DEFAULT_UA
 
     async def fetch(self) -> list[RawItem]:
@@ -45,6 +46,7 @@ class RssAdapter(SourceAdapter):
                     title=entry.get("title", "").strip(),
                     outlet=self.outlet,
                     source_kind=self.source_kind,
+                    paywall=self.paywall,
                     published_at=published,
                     author=entry.get("author"),
                     body=entry.get("summary"),
