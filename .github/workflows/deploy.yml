@@ -19,6 +19,9 @@ on:
       - "pnpm-workspace.yaml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-web
   cancel-in-progress: false
