@@ -30,7 +30,7 @@ jobs:
   deploy:
     runs-on: [self-hosted, oci]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Build and roll forward
         run: |
