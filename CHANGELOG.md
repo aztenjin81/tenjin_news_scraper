@@ -21,3 +21,7 @@
 - vitest ^2 → ~4.0.18: ships vite@6 internally; clears all remaining audit vulnerabilities (esbuild + vite CVEs)
 - ESLint 10 deferred: `eslint-plugin-react@7.37.5` (dep of `eslint-config-next`) caps at `^9.7`; will unblock when upstream updates
 - HackerNews source adapter: fetches top 50 stories concurrently from Firebase API, no credentials required
+- Reddit RSS feeds: 9 subreddits registered (worldnews, news, geopolitics, technology, science, economics, finance, environment, climate)
+- `feeds.py`: central feed registry; `scrape.run_all()` iterates every configured feed
+- `RssAdapter`: adds `tenjin-news-bot/1.0` User-Agent to avoid Reddit rate-limiting
+- Fixed fixture article URLs — all 12 stories now link to article paths, not root domains
