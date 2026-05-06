@@ -1,31 +1,62 @@
 # CLAUDE.md
 
-Guidance for Claude Code (and other AI assistants) when working in this repository.
+Guidance for Claude Code (and other AI assistants) working in this repository.
 
-## Project Overview
+## What this repo is
 
-Tenjin News Scraper is a Python toolkit for scraping news articles from configurable sources, normalizing them into a common schema, and persisting the results.
+Tenjin News is a topic-driven news aggregator. See `README.md` for the product pitch and `docs/architecture.md` (TODO) for the long-form design.
 
-## Conventions
+## Layout
 
-- **Language**: Python 3.11+
-- **Style**: PEP 8, type hints on all public functions
-- **Formatting**: Use the formatter configured in `pyproject.toml` once it exists (likely `ruff format`)
-- **Tests**: `pytest`, colocated under `tests/` mirroring the package layout
-- **Commits**: Imperative mood, scoped subject (`scraper: handle redirects`)
+This is a monorepo with two deployable units:
 
-## Working in this repo
+```
+apps/web/          Next.js 15 (App Router, TS, Tailwind v4) — public site
+services/api/      FastAPI (Python 3.11+) — API + scraper workers
+infra/             docker-compose for local Postgres + Redis
+```
 
-- Prefer editing existing modules over creating new ones unless a clear new boundary is warranted.
-- Do not commit scraped article payloads, API keys, or `.env` files.
-- When adding a new source, follow the pattern in `CONTRIBUTING.md`.
+Each package has its own `CLAUDE.md` with package-specific conventions. **Read it before editing inside that package.**
 
-## Useful commands
+- `apps/web/CLAUDE.md`
+- `services/api/CLAUDE.md`
 
-These commands are placeholders until the toolchain is wired up:
+## Cross-cutting conventions
+
+- **Branches**: feature work goes on `claude/<short-description>` or `<your-name>/<short-description>`. Never commit to `main` directly.
+- **Commits**: imperative mood, scoped subject. `api: add rss adapter`, `web: render topic page metadata`, `infra: bump postgres to 16`.
+- **PRs**: small and focused. One concern per PR.
+- **Secrets**: never commit `.env`, API keys, or scraped article payloads. `infra/.env.example` is the source of truth for required env vars.
+- **Generated files**: don't commit `node_modules/`, `.venv/`, `__pycache__/`, build output, or migration artifacts that aren't checked-in migrations.
+
+## Local dev
 
 ```bash
-pytest                  # run tests
-ruff check .            # lint
-ruff format .           # format
+# Bring up Postgres + Redis
+docker compose -f infra/docker-compose.yml up -d
+
+# Backend (in one terminal)
+cd services/api
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+uvicorn tenjin.api.app:app --reload
+
+# Frontend (in another terminal)
+cd apps/web
+pnpm install
+pnpm dev
 ```
+
+## When adding a feature
+
+- **New source**: add an adapter under `services/api/tenjin/sources/` implementing `SourceAdapter`. Register it in `sources/registry.py`. Add a fixture-backed test in `services/api/tests/sources/`.
+- **New API route**: add to `services/api/tenjin/api/routes/`. Keep route handlers thin — push logic into `pipeline/` or service modules.
+- **New page**: add under `apps/web/app/`. Pages that should be SEO-indexed must export `generateMetadata` and use SSR (no `"use client"` at the page root).
+- **Schema change**: edit the SQLAlchemy model, then `alembic revision --autogenerate -m "..."`, review the generated migration, commit both.
+
+## What not to do
+
+- Don't add LLM features to v1 — they're explicitly deferred to v2 in the roadmap.
+- Don't store full article bodies for outlets whose ToS forbid republication. Bodies are used internally for dedup; only headlines, snippets, and links are surfaced to users.
+- Don't bypass `robots.txt` or per-source rate limits.
+- Don't introduce a third stack (no Go service, no Rust worker) without discussion. The bet is Python + TS, full stop.
