@@ -20,6 +20,7 @@ class HackerNewsAdapter(SourceAdapter):
     """Top stories from the Hacker News Firebase API. No credentials required."""
 
     name: str = "hackernews"
+    source_kind: str = "social"
     limit: int = field(default=50)
 
     async def fetch(self) -> list[RawItem]:
@@ -67,7 +68,7 @@ async def _fetch_item(client: httpx.AsyncClient, item_id: int) -> RawItem | None
         url=url,
         title=data.get("title", "").strip(),
         outlet=_OUTLET,
-        source_kind="social",
+        source_kind=HackerNewsAdapter.source_kind,
         author=data.get("by"),
         published_at=published_at,
         body=data.get("text"),
