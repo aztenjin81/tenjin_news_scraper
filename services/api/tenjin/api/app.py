@@ -1,14 +1,23 @@
 from contextlib import asynccontextmanager
 
+import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from tenjin.api.routes import articles, health, stream, topics
 from tenjin.config import get_settings
+from tenjin.db.bootstrap import install_topics
+
+log = structlog.get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    try:
+        await install_topics()
+        log.info("app.topics_installed")
+    except Exception as e:
+        log.warning("app.topic_install_failed", error=str(e))
     yield
 
 

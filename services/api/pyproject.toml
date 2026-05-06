@@ -41,6 +41,10 @@ packages = ["tenjin"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+extend-exclude = [
+    "tenjin/db/migrations/versions",
+    "tenjin/db/migrations/env.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]

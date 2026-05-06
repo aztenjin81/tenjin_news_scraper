@@ -2,7 +2,14 @@ import { fixtureArticles } from "./fixtures";
 import { getTopicBySlug, isKnownTopic, type Topic as TopicMeta } from "./topics";
 import type { SourceKind } from "./sources";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+// Server-side fetches (Server Components, route handlers) prefer API_BASE_URL —
+// inside docker that points at the api container directly (http://api:8000).
+// Browser fetches only see NEXT_PUBLIC_API_BASE_URL since NEXT_PUBLIC_* is the
+// only env namespace bundled into the client.
+const API_BASE =
+  process.env.API_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  "http://localhost:8000";
 
 export type Topic = {
   slug: string;
