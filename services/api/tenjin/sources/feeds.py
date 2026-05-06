@@ -241,4 +241,47 @@ FEEDS = [
         "War on the Rocks",
         "analysis",
     ),
+    # ── US national mainstream ────────────────────────────────────────────────
+    # source_kind="wire" is an imperfect fit for broadcast networks (NBC/CBS/ABC)
+    # and a national daily (USA Today). Of the existing kinds (wire | regional |
+    # primary | social | analysis | state) wire is the closest match — these
+    # outlets aren't regional in any meaningful sense. Adding a "national" kind
+    # would touch the schema, the SourcePill component, and tests; not worth it
+    # for v1.
+    #
+    # Skipped (no usable public RSS):
+    # - Reuters (wire agency): reutersagency.com/feed returns 404; reuters.com
+    #   blocks bots with DataDome/CloudFront (401).
+    # - USA Today (national daily): rssfeeds.usatoday.com redirects to HTML
+    #   homepage (Gannett killed the RSS subdomain).
+    _rss(
+        "npr-news",
+        "https://feeds.npr.org/1001/rss.xml",
+        "NPR",
+        "wire",
+    ),
+    _rss(
+        "pbs-newshour",
+        "https://www.pbs.org/newshour/feeds/rss/headlines",
+        "PBS NewsHour",
+        "wire",
+    ),
+    _rss(
+        "nbc-news",
+        "https://feeds.nbcnews.com/nbcnews/public/news",
+        "NBC News",
+        "wire",
+    ),
+    _rss(
+        "cbs-news",
+        "https://www.cbsnews.com/latest/rss/main",
+        "CBS News",
+        "wire",
+    ),
+    _rss(
+        "abc-news",
+        "https://abcnews.go.com/abcnews/topstories",
+        "ABC News",
+        "wire",
+    ),
 ]
