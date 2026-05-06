@@ -44,6 +44,7 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["B008"]  # FastAPI Query/Body/Header in function defaults is idiomatic
 
 [tool.pytest.ini_options]
 addopts = "-ra"

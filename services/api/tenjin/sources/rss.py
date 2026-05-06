@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import feedparser
 import httpx
@@ -53,6 +53,6 @@ def _parse_date(value: str | None) -> datetime | None:
 
     try:
         dt = parsedate_to_datetime(value)
-        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+        return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
     except (TypeError, ValueError):
         return None
