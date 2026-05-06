@@ -91,6 +91,45 @@ FEEDS = [
         "The Cradle",
         "regional",
     ),
+    # Ukrainian outlets
+    _rss(
+        "kyiv-independent",
+        "https://kyivindependent.com/feed/",
+        "Kyiv Independent",
+        "regional",
+    ),
+    _rss(
+        "ukrainska-pravda",
+        "https://www.pravda.com.ua/eng/rss/",
+        "Ukrainska Pravda",
+        "regional",
+    ),
+    _rss(
+        "euromaidan-press",
+        "https://euromaidanpress.com/feed/",
+        "Euromaidan Press",
+        "regional",
+    ),
+    # Russian-independent (anti-Kremlin, exiled)
+    _rss(
+        "meduza",
+        "https://meduza.io/en/rss/all",
+        "Meduza",
+        "regional",
+    ),
+    _rss(
+        "moscow-times",
+        "https://www.themoscowtimes.com/rss/news",
+        "Moscow Times",
+        "regional",
+    ),
+    # Central / Eastern Europe
+    _rss(
+        "notes-from-poland",
+        "https://notesfrompoland.com/feed/",
+        "Notes from Poland",
+        "regional",
+    ),
     # ── State media ───────────────────────────────────────────────────────────
     # Including these is a deliberate editorial choice for transparency on
     # competing narratives. The `state` source_kind makes them visually obvious
@@ -138,6 +177,12 @@ FEEDS = [
         "Al Mayadeen",
         "state",
     ),
+    _rss(
+        "kremlin",
+        "http://en.kremlin.ru/events/news/feed",
+        "Kremlin.ru",
+        "state",
+    ),
     # ── Primary (government / IGO press) ──────────────────────────────────────
     _rss(
         "us-state-dept",
@@ -180,6 +225,30 @@ FEEDS = [
         "brookings-foreign-policy",
         "https://www.brookings.edu/topic/foreign-policy/feed/",
         "Brookings",
+        "analysis",
+    ),
+    _rss(
+        "atlantic-council-ukraine",
+        "https://www.atlanticcouncil.org/blogs/ukrainealert/feed/",
+        "Atlantic Council UkraineAlert",
+        "analysis",
+    ),
+    _rss(
+        "csis",
+        "https://www.csis.org/analysis/feed",
+        "CSIS",
+        "analysis",
+    ),
+    _rss(
+        "rusi",
+        "https://rusi.org/explore-our-research.rss",
+        "RUSI",
+        "analysis",
+    ),
+    _rss(
+        "war-on-the-rocks",
+        "https://warontherocks.com/feed/",
+        "War on the Rocks",
         "analysis",
     ),
 ]
