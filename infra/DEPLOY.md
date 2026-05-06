@@ -112,7 +112,7 @@ Put per-host secrets and overrides in `/opt/tenjin/.env`. `docker compose` reads
 POSTGRES_PASSWORD=...      # change from the default
 API_CORS_ORIGINS=https://tenjin.us
 NEXT_PUBLIC_API_BASE_URL=  # only if you exposed api.tenjin.us
-SCRAPE_INTERVAL_SECONDS=900
+SCRAPE_INTERVAL_SECONDS=300
 ```
 
 ## First deploy

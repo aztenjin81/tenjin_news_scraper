@@ -12,7 +12,7 @@ from tenjin.workers.scrape import run_all
 
 log = structlog.get_logger(__name__)
 
-INTERVAL_SECONDS = int(os.environ.get("SCRAPE_INTERVAL_SECONDS", "900"))  # 15 min default
+INTERVAL_SECONDS = int(os.environ.get("SCRAPE_INTERVAL_SECONDS", "300"))  # 5 min default
 
 
 async def loop() -> None:
