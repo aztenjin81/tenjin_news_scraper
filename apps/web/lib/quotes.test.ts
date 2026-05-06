@@ -2,14 +2,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const SYMBOL_COUNT = 8;
 
-function yahooOk(px: number, prev: number, hist: (number | null)[]) {
+function yahooOk(
+  px: number,
+  prev: number,
+  hist: (number | null)[],
+  delayedBy?: number,
+) {
   return {
     ok: true,
     json: async () => ({
       chart: {
         result: [
           {
-            meta: { regularMarketPrice: px, chartPreviousClose: prev },
+            meta: {
+              regularMarketPrice: px,
+              chartPreviousClose: prev,
+              ...(delayedBy !== undefined ? { exchangeDataDelayedBy: delayedBy } : {}),
+            },
             indicators: { quote: [{ close: hist }] },
           },
         ],
@@ -110,5 +119,26 @@ describe("getQuotes", () => {
 
     expect(a).toEqual(b);
     expect(fetchMock.mock.calls.length).toBe(SYMBOL_COUNT);
+  });
+
+  it("propagates yahoo symbol and delayedBy from upstream meta", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(yahooOk(100, 99, [99, 100], 15)));
+
+    const { getQuotes } = await import("./quotes");
+    const quotes = await getQuotes();
+
+    const sp = quotes.find((q) => q.sym === "S&P");
+    expect(sp?.yahoo).toBe("^GSPC");
+    expect(sp?.delayedBy).toBe(15);
+  });
+
+  it("leaves delayedBy undefined when upstream omits exchangeDataDelayedBy", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(yahooOk(100, 99, [99, 100])));
+
+    const { getQuotes } = await import("./quotes");
+    const quotes = await getQuotes();
+
+    const sp = quotes.find((q) => q.sym === "S&P");
+    expect(sp?.delayedBy).toBeUndefined();
   });
 });
