@@ -1,39 +1,13 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Query
-from pydantic import BaseModel, HttpUrl
 from sqlalchemy import func, select
 
 from tenjin.api.deps import SessionDep
+from tenjin.api.schemas.article import ArticleOut, to_article_out
 from tenjin.models import Article, Topic, TopicMatch
 
 router = APIRouter()
-
-_LABELS = {
-    "wire": "Wire",
-    "regional": "Regional",
-    "primary": "Primary",
-    "social": "Social",
-    "analysis": "Analysis",
-    "state": "State media",
-}
-_BREAKING_THRESHOLD = timedelta(minutes=20)
-
-
-class ArticleOut(BaseModel):
-    id: str
-    url: HttpUrl
-    title: str
-    outlet: str
-    source_kind: str
-    source_label: str
-    author: str | None = None
-    published_at: datetime | None = None
-    fetched_at: datetime
-    snippet: str | None = None
-    lang: str | None = None
-    is_breaking: bool = False
-    paywall: bool = False
 
 
 @router.get("", response_model=list[ArticleOut])
@@ -65,23 +39,4 @@ async def list_articles(
 
     rows = (await session.execute(stmt)).scalars().all()
     now = datetime.now(UTC)
-    return [_to_out(a, now) for a in rows]
-
-
-def _to_out(a: Article, now: datetime) -> ArticleOut:
-    fetched = a.fetched_at if a.fetched_at.tzinfo else a.fetched_at.replace(tzinfo=UTC)
-    return ArticleOut(
-        id=str(a.id),
-        url=a.url,
-        title=a.title,
-        outlet=a.outlet,
-        source_kind=a.source_kind,
-        source_label=_LABELS.get(a.source_kind, a.source_kind.title()),
-        author=a.author,
-        published_at=a.published_at,
-        fetched_at=fetched,
-        snippet=a.snippet,
-        lang=a.lang,
-        is_breaking=(now - fetched) < _BREAKING_THRESHOLD,
-        paywall=a.paywall,
-    )
+    return [to_article_out(a, now) for a in rows]
