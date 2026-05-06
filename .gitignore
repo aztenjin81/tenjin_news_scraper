@@ -55,4 +55,3 @@ out/
 .turbo/
 .pnpm-store/
 *.tsbuildinfo
-.next-env.d.ts

@@ -1,0 +1,14 @@
+node_modules
+.next
+.next-env.d.ts
+.turbo
+.pnpm-store
+.git
+.gitignore
+README.md
+CLAUDE.md
+.env
+.env.local
+.env.*.local
+Dockerfile
+.dockerignore

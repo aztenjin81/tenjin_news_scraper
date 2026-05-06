@@ -6,26 +6,62 @@ Next.js 15 (App Router, TypeScript, Tailwind v4) — public site.
 
 ```
 app/
-├── layout.tsx          Root layout, header, footer, global metadata
-├── page.tsx            Home — featured topics
-├── globals.css         Tailwind + theme tokens
-└── t/[topic]/page.tsx  Topic feed page (SSR + ISR)
+├── layout.tsx               Root layout, header/footer, fonts, global metadata
+├── page.tsx                 Home — hero (title + lede + search) + Ticker + featured topics
+├── globals.css              Tailwind import + theme tokens + keyframes
+├── about/page.tsx           /about — what we do / don't do, source taxonomy
+├── t/[topic]/page.tsx       Topic feed (SSR + ISR) — eyebrow, H1, LiveIndicator, article list
+└── t/[topic]/not-found.tsx  Custom 404 voice for unknown topics
+
+components/
+├── Header.tsx               Logomark + wordmark text + nav links
+├── Footer.tsx
+├── Logomark.tsx             Inline SVG (six bars, rightmost in --accent)
+├── SearchBar.tsx            (client) free-text → /t/<slug>
+├── Ticker.tsx               (client) postage-stamp markets grid with sparklines
+├── TopicTile.tsx            Featured-topic card
+├── ArticleRow.tsx           Single headline row with SourcePill + meta
+├── SourcePill.tsx           Color-coded badge per source kind
+├── LiveIndicator.tsx        (client) pulsing dot + "Updated Xs ago"
+└── EmptyState.tsx
+
 lib/
-└── api.ts              Typed client for the FastAPI backend
+├── api.ts                   Article/Topic types + fetcher with fixture fallback
+├── topics.ts                TOPICS list, slugify, header subset
+├── sources.ts               SourceKind taxonomy + labels/examples
+└── fixtures.ts              Demo articles for the design preview
+
+public/
+├── logomark.svg             Six-bar logomark
+├── wordmark.svg             Logomark + "Tenjin News" text
+└── favicon.svg              Square favicon
 ```
 
 ## Conventions
 
-- **Server Components by default.** Add `"use client"` only when you need state, effects, or browser APIs. Topic pages must be server components so SEO crawlers see content.
-- **Metadata.** Every routable page exports `generateMetadata` (or static `metadata`). Topic pages set `alternates.canonical`.
-- **Data fetching** goes through `lib/api.ts`. Don't `fetch` the API directly from page components — keep types and base-URL handling in one place.
-- **Styling** via Tailwind v4 utility classes. Theme tokens live in `app/globals.css` as CSS variables (`--background`, `--foreground`, `--accent`); reference them as `bg-[var(--accent)]` etc. Don't add a UI kit without discussion.
-- **Live updates.** Topic pages use ISR (`revalidate = 60`) for SSR snapshots and will subscribe to `${API_BASE}/stream/topic/${slug}` (SSE) from a small client component for real-time appends. SSE client component lives at `app/t/[topic]/_components/LiveFeed.tsx` (TODO).
-- **Routing.** New top-level page → `app/<segment>/page.tsx`. New API client function → add to `lib/api.ts` with a return type.
+- **Server Components by default.** Mark `"use client"` only on components that need state, effects, or browser APIs (`SearchBar`, `Ticker`, `LiveIndicator`). Topic and home pages stay server-rendered for SEO.
+- **Tailwind v4 utilities only.** No styled-components, no raw CSS modules. Use arbitrary-value utilities (`text-[44px]`, `border-white/10`) when the value isn't in the default scale.
+- **Theme tokens in `globals.css`.** Reference via `style={{ color: "var(--accent)" }}` or `bg-[var(--surface-1)]`. The full token set:
+  - Color: `--background`, `--foreground`, `--foreground-2`, `--muted`, `--accent`, `--accent-hover`, `--accent-press`, `--accent-soft`, `--surface-1`, `--surface-2`
+  - Source taxonomy: `--src-{kind}-{dot|bg|fg}` for kind in `wire | regional | primary | social | analysis | state`
+  - Fonts: Tailwind `font-sans` / `font-serif` / `font-mono` are wired through `@theme` to `--font-inter` / `--font-newsreader` / `--font-jetbrains-mono` (loaded via `next/font/google` in `layout.tsx`)
+- **Type weights.** 400 / 500 / 600 only. Never 700+. Never italic in chrome.
+- **Borders carry elevation.** Cards use `border border-white/10` with `hover:border-white/30`. No shadows. No gradients.
+- **Metadata.** Every routable page exports `generateMetadata` (or static `metadata`). Topic and about pages set `alternates.canonical`.
+- **Data fetching** goes through `lib/api.ts`. Pages don't call `fetch` directly. The client falls back to `lib/fixtures.ts` when the backend is unreachable so the site renders in dev.
+- **External links.** Always `target="_blank" rel="noopener noreferrer"`.
+
+## Voice
+
+- Sentence case for body, page titles, topic labels (`Iran / US`).
+- ALL CAPS only on eyebrows / section labels with `tracking-wider`.
+- No emoji. Anywhere — product, commits, docs.
+- No exclamation marks. No "AI" / "intelligence" language in v1.
 
 ## Don't
 
 - Don't `"use client"` at the page root. Push interactivity into leaf components.
 - Don't hardcode the API base URL. Use `NEXT_PUBLIC_API_BASE_URL`.
-- Don't add server-side secrets to env vars prefixed with `NEXT_PUBLIC_` — they ship to the browser.
 - Don't introduce a state library (Redux/Zustand) for v1. Server Components + URL state is enough.
+- Don't add a parallel `--tj-*` token namespace. The production tokens are `--background` etc. — use those.
+- Don't add new fonts without updating both `layout.tsx` (next/font import) and `globals.css` `@theme` block.

@@ -1,0 +1,23 @@
+type Props = {
+  size?: number;
+  className?: string;
+};
+
+export function Logomark({ size = 22, className }: Props) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      className={className}
+    >
+      <rect x="1" y="13" width="2.6" height="8" rx="0.6" fill="currentColor" opacity="0.55" />
+      <rect x="4.8" y="9" width="2.6" height="12" rx="0.6" fill="currentColor" opacity="0.65" />
+      <rect x="8.6" y="11" width="2.6" height="10" rx="0.6" fill="currentColor" opacity="0.75" />
+      <rect x="12.4" y="6" width="2.6" height="15" rx="0.6" fill="currentColor" opacity="0.85" />
+      <rect x="16.2" y="10" width="2.6" height="11" rx="0.6" fill="currentColor" />
+      <rect x="20" y="3" width="2.6" height="18" rx="0.6" style={{ fill: "var(--accent)" }} />
+    </svg>
+  );
+}
