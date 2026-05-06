@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 32" fill="none" aria-label="Tenjin News">
+  <rect x="0" y="17" width="3.2" height="11" rx="0.7" fill="#f5f5f7" opacity="0.55"/>
+  <rect x="4.6" y="12" width="3.2" height="16" rx="0.7" fill="#f5f5f7" opacity="0.65"/>
+  <rect x="9.2" y="14" width="3.2" height="14" rx="0.7" fill="#f5f5f7" opacity="0.75"/>
+  <rect x="13.8" y="8" width="3.2" height="20" rx="0.7" fill="#f5f5f7" opacity="0.85"/>
+  <rect x="18.4" y="13" width="3.2" height="15" rx="0.7" fill="#f5f5f7"/>
+  <rect x="23" y="4" width="3.2" height="24" rx="0.7" fill="#c5301f"/>
+  <text x="36" y="23" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="600" letter-spacing="-0.4" fill="#f5f5f7">Tenjin <tspan fill="#c5301f">News</tspan></text>
+</svg>
