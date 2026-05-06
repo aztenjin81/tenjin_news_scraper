@@ -11,6 +11,9 @@ from tenjin.sources.registry import register
 log = structlog.get_logger(__name__)
 
 
+_DEFAULT_UA = "tenjin-news-bot/1.0 (news aggregator; +https://tenjin.us)"
+
+
 @dataclass
 @register("rss")
 class RssAdapter(SourceAdapter):
@@ -19,10 +22,12 @@ class RssAdapter(SourceAdapter):
     name: str
     feed_url: str
     outlet: str
+    user_agent: str = _DEFAULT_UA
 
     async def fetch(self) -> list[RawItem]:
+        headers = {"User-Agent": self.user_agent}
         try:
-            async with httpx.AsyncClient(timeout=15) as client:
+            async with httpx.AsyncClient(timeout=15, headers=headers) as client:
                 resp = await client.get(self.feed_url)
                 resp.raise_for_status()
             parsed = feedparser.parse(resp.content)

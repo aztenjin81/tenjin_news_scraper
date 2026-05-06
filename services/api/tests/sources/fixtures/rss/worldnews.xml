@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>r/worldnews</title>
+    <link>https://www.reddit.com/r/worldnews/</link>
+    <description>A place for major news from around the world</description>
+    <item>
+      <title>Peace talks resume between two nations after months of stalemate</title>
+      <link>https://example.com/peace-talks</link>
+      <author>u/newsreader</author>
+      <pubDate>Wed, 06 May 2026 04:00:00 +0000</pubDate>
+      <description>Full article at the link above.</description>
+    </item>
+    <item>
+      <title>Global trade figures show unexpected growth in Q1</title>
+      <link>https://example.com/trade-figures</link>
+      <author>u/econwatcher</author>
+      <pubDate>Wed, 06 May 2026 03:30:00 +0000</pubDate>
+      <description>Details inside.</description>
+    </item>
+  </channel>
+</rss>
