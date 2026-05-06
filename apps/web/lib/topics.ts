@@ -12,6 +12,7 @@ export const TOPICS: readonly Topic[] = [
   { slug: "syria", label: "Syria", blurb: "Government, opposition, foreign forces." },
   { slug: "iraq", label: "Iraq", blurb: "PMF activity, US presence, Kurdish politics." },
   { slug: "strait-of-hormuz", label: "Strait of Hormuz", blurb: "Tanker incidents, naval posture." },
+  { slug: "ukraine-war", label: "Ukraine War", blurb: "Frontline, sanctions, NATO, Western aid." },
 ] as const;
 
 export const HEADER_TOPICS = TOPICS.slice(0, 3).map((t) => ({

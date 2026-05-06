@@ -45,6 +45,31 @@ PRESETS: list[Topic] = [
         query="strait of hormuz incidents",
         terms=("hormuz", "strait of hormuz", "tanker", "irgc navy"),
     ),
+    Topic(
+        slug="ukraine-war",
+        label="Ukraine War",
+        query="ukraine russia war",
+        terms=(
+            "ukraine",
+            "ukrainian",
+            "kyiv",
+            "zelensky",
+            "zelenskyy",
+            "donbas",
+            "donetsk",
+            "luhansk",
+            "crimea",
+            "kharkiv",
+            "mariupol",
+            "odesa",
+            "russian forces",
+            "russian troops",
+            "russian invasion",
+            "kremlin",
+            "putin",
+            "wagner",
+        ),
+    ),
 ]
 
 
