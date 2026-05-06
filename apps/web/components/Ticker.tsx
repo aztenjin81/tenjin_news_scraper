@@ -2,16 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-const N = 24;
+import type { Quote } from "@/lib/quotes";
 
-type Quote = {
-  sym: string;
-  px: number;
-  pct: number;
-  hist: number[];
-  suffix?: string;
-  watch?: boolean;
-};
+const N = 24;
+const POLL_MS = 60_000;
 
 function seedSeries(px: number, vol = 0.012): number[] {
   const out: number[] = [px];
@@ -24,14 +18,14 @@ function seedSeries(px: number, vol = 0.012): number[] {
 }
 
 const SEED: Quote[] = [
-  { sym: "S&P", px: 5847.32, pct: +0.42, hist: [] },
+  { sym: "S&P", px: 5847.32, pct: 0.42, hist: [] },
   { sym: "DOW", px: 42365.1, pct: -0.18, hist: [] },
-  { sym: "NDX", px: 20431.7, pct: +0.66, hist: [] },
+  { sym: "NDX", px: 20431.7, pct: 0.66, hist: [] },
   { sym: "10Y", px: 4.218, pct: -0.04, suffix: "%", hist: [] },
-  { sym: "VIX", px: 14.62, pct: +1.93, hist: [] },
+  { sym: "VIX", px: 14.62, pct: 1.93, hist: [] },
   { sym: "WTI", px: 71.84, pct: -0.55, hist: [] },
-  { sym: "GOLD", px: 2734.5, pct: +0.31, hist: [] },
-  { sym: "CXDO", px: 6.41, pct: +2.71, watch: true, hist: [] },
+  { sym: "GOLD", px: 2734.5, pct: 0.31, hist: [] },
+  { sym: "CXDO", px: 6.41, pct: 2.71, watch: true, hist: [] },
 ].map((x) => ({ ...x, hist: seedSeries(x.px, x.suffix === "%" ? 0.006 : 0.012) }));
 
 function fmtPx(p: number, suffix?: string): string {
@@ -75,24 +69,32 @@ function Sparkline({ series, up, watch }: { series: number[]; up: boolean; watch
   );
 }
 
-export function Ticker() {
-  const [items, setItems] = useState<Quote[]>(SEED);
+export function Ticker({ initial }: { initial?: Quote[] } = {}) {
+  const [items, setItems] = useState<Quote[]>(initial && initial.length > 0 ? initial : SEED);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setItems((curr) =>
-        curr.map((x) => {
-          const drift =
-            (Math.random() - 0.5) * (x.suffix === "%" ? 0.004 : x.px * 0.0009);
-          const px = Math.max(0.01, x.px + drift);
-          const pct = x.pct + (Math.random() - 0.5) * 0.05;
-          const hist = [...x.hist.slice(1), px];
-          return { ...x, px, pct, hist };
-        }),
-      );
-    }, 2200);
-    return () => clearInterval(id);
-  }, []);
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/quotes", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as Quote[];
+        if (!cancelled && Array.isArray(data) && data.length > 0) setItems(data);
+      } catch {
+        // upstream hiccup — keep showing the last known state
+      }
+    }
+
+    // Skip the first poll if SSR already gave us fresh data.
+    if (!initial || initial.length === 0) load();
+
+    const id = setInterval(load, POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [initial]);
 
   return (
     <div>
@@ -148,10 +150,7 @@ export function Ticker() {
                 >
                   {x.sym}
                 </span>
-                <span
-                  className="font-mono text-[9px] tabular-nums"
-                  style={{ color }}
-                >
+                <span className="font-mono text-[9px] tabular-nums" style={{ color }}>
                   {up ? "+" : "−"}
                   {Math.abs(x.pct).toFixed(2)}%
                 </span>
