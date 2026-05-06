@@ -21,6 +21,20 @@ updates:
         patterns: ["tailwindcss", "@tailwindcss/*"]
       dev:
         dependency-type: development
+    ignore:
+      # ESLint 10 — blocked by eslint-plugin-react@7.37.5 (transitive dep of
+      # eslint-config-next@16) which caps at eslint^9.7. Re-enable when upstream
+      # ships a release supporting eslint@10. Tracked in CHANGELOG.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      # vitest 4.1.x requires vite@^6 as a peer dep; vitest 4.0.x ships its own
+      # vite. Pinned ~4.0 by intent. Re-evaluate when Next.js 16 ships vite@6.
+      - dependency-name: "vitest"
+        versions: [">=4.1.0"]
+      # @types/node major bumps land alongside the broken trio above so they
+      # repeatedly fail CI. Allow minor/patch only.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: pip
     directory: /services/api
