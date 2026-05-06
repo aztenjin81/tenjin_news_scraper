@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Atom feed with ISO 8601 dates</title>
+  <link href="https://example.com/" />
+  <updated>2026-05-06T10:00:00Z</updated>
+  <entry>
+    <title>Article using Atom updated</title>
+    <link href="https://example.com/atom-1" />
+    <id>https://example.com/atom-1</id>
+    <updated>2026-05-06T08:00:00Z</updated>
+  </entry>
+  <entry>
+    <title>Article using Atom published</title>
+    <link href="https://example.com/atom-2" />
+    <id>https://example.com/atom-2</id>
+    <published>2026-05-06T07:30:00+00:00</published>
+    <updated>2026-05-06T07:31:00+00:00</updated>
+  </entry>
+</feed>

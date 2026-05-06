@@ -1,3 +1,5 @@
+import calendar
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -39,7 +41,10 @@ class RssAdapter(SourceAdapter):
 
         items: list[RawItem] = []
         for entry in parsed.entries:
-            published = _parse_date(entry.get("published") or entry.get("updated"))
+            # feedparser normalizes RFC 2822, ISO 8601, and Atom dates into a
+            # struct_time in UTC. Prefer published_parsed; fall back to
+            # updated_parsed (Atom feeds often only have <updated>).
+            published = _to_datetime(entry.get("published_parsed") or entry.get("updated_parsed"))
             items.append(
                 RawItem(
                     url=entry.get("link", ""),
@@ -55,13 +60,8 @@ class RssAdapter(SourceAdapter):
         return items
 
 
-def _parse_date(value: str | None) -> datetime | None:
-    if not value:
+def _to_datetime(parsed: time.struct_time | None) -> datetime | None:
+    """Convert feedparser's struct_time (always UTC) to an aware datetime."""
+    if parsed is None:
         return None
-    from email.utils import parsedate_to_datetime
-
-    try:
-        dt = parsedate_to_datetime(value)
-        return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
-    except (TypeError, ValueError):
-        return None
+    return datetime.fromtimestamp(calendar.timegm(parsed), tz=UTC)
