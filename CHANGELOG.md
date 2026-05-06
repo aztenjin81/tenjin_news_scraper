@@ -21,6 +21,10 @@
 - vitest ^2 → ~4.0.18: ships vite@6 internally; clears all remaining audit vulnerabilities (esbuild + vite CVEs)
 - ESLint 10 deferred: `eslint-plugin-react@7.37.5` (dep of `eslint-config-next`) caps at `^9.7`; will unblock when upstream updates
 - HackerNews source adapter: fetches top 50 stories concurrently from Firebase API, no credentials required
+- 22 RSS feeds added across all source kinds: BBC World/Middle East, AP, Al Jazeera, Times of Israel, Haaretz, Arab News, The Cradle, Tehran Times, Press TV, IRNA, TASS, RT, Xinhua, Al Mayadeen, US State Dept, US CENTCOM, US DoD, ReliefWeb, IAEA, ISW, Brookings
+- 11 Ukraine-focused feeds added: Kyiv Independent, Ukrainska Pravda, Euromaidan Press, Meduza, Moscow Times, Notes from Poland, Kremlin.ru, Atlantic Council UkraineAlert, CSIS, RUSI, War on the Rocks
+- New topic: `ukraine-war` (registered on both backend topic registry and frontend)
+- Article list sort fixed — was clustering by source (scheduler processes feeds sequentially, fetched_at clusters per feed). Now ordered by `COALESCE(published_at, fetched_at) DESC` so topic pages show genuine recency
 - **End-to-end pipeline live**: adapters → normalize → dedupe → topic-match → DB → API → frontend. Real headlines flow through every 15 min via scheduler container; topic pages now show live data instead of fixtures
 - API Dockerfile fix: copy source before `pip install` (Hatchling needs the package directory to exist, even for non-editable install)
 - `Settings.api_cors_origins` accepts plain string / comma-separated / JSON list via `NoDecode` + `field_validator` (caused first deploy outage)
