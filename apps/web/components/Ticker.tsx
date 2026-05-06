@@ -18,15 +18,19 @@ function seedSeries(px: number, vol = 0.012): number[] {
 }
 
 const SEED: Quote[] = [
-  { sym: "S&P", px: 5847.32, pct: 0.42, hist: [] },
-  { sym: "DOW", px: 42365.1, pct: -0.18, hist: [] },
-  { sym: "NDX", px: 20431.7, pct: 0.66, hist: [] },
-  { sym: "10Y", px: 4.218, pct: -0.04, suffix: "%", hist: [] },
-  { sym: "VIX", px: 14.62, pct: 1.93, hist: [] },
-  { sym: "WTI", px: 71.84, pct: -0.55, hist: [] },
-  { sym: "GOLD", px: 2734.5, pct: 0.31, hist: [] },
-  { sym: "CXDO", px: 6.41, pct: 2.71, watch: true, hist: [] },
+  { sym: "S&P", yahoo: "^GSPC", px: 5847.32, pct: 0.42, hist: [] },
+  { sym: "DOW", yahoo: "^DJI", px: 42365.1, pct: -0.18, hist: [] },
+  { sym: "NDX", yahoo: "^NDX", px: 20431.7, pct: 0.66, hist: [] },
+  { sym: "10Y", yahoo: "^TNX", px: 4.218, pct: -0.04, suffix: "%", hist: [] },
+  { sym: "VIX", yahoo: "^VIX", px: 14.62, pct: 1.93, hist: [] },
+  { sym: "WTI", yahoo: "CL=F", px: 71.84, pct: -0.55, hist: [] },
+  { sym: "GOLD", yahoo: "GC=F", px: 2734.5, pct: 0.31, hist: [] },
+  { sym: "CXDO", yahoo: "CXDO", px: 6.41, pct: 2.71, watch: true, hist: [] },
 ].map((x) => ({ ...x, hist: seedSeries(x.px, x.suffix === "%" ? 0.006 : 0.012) }));
+
+function yahooHref(yahoo: string | undefined): string | null {
+  return yahoo ? `https://finance.yahoo.com/quote/${encodeURIComponent(yahoo)}` : null;
+}
 
 function fmtPx(p: number, suffix?: string): string {
   if (suffix === "%") return p.toFixed(3) + "%";
@@ -96,6 +100,13 @@ export function Ticker({ initial }: { initial?: Quote[] } = {}) {
     };
   }, [initial]);
 
+  // Yahoo reports per-symbol delays (0 for indices, 15 for most US equities,
+  // 10 for futures). Surface the worst case so users know what they're seeing.
+  const maxDelay = items.reduce(
+    (m, q) => (typeof q.delayedBy === "number" && q.delayedBy > m ? q.delayedBy : m),
+    0,
+  );
+
   return (
     <div>
       <div className="mb-2.5 flex items-baseline justify-between">
@@ -141,15 +152,34 @@ export function Ticker({ initial }: { initial?: Quote[] } = {}) {
                 />
               ) : null}
               <div className="flex items-baseline justify-between">
-                <span
-                  className="text-[10px] font-semibold"
-                  style={{
+                {(() => {
+                  const href = yahooHref(x.yahoo);
+                  const delayLabel =
+                    typeof x.delayedBy === "number" && x.delayedBy > 0
+                      ? `Delayed ${x.delayedBy} min`
+                      : "Real time";
+                  const titleSuffix = x.watch ? " — on watchlist" : "";
+                  const symStyle = {
                     letterSpacing: "0.04em",
                     color: x.watch ? "var(--accent)" : "var(--foreground-2)",
-                  }}
-                >
-                  {x.sym}
-                </span>
+                  } as const;
+                  return href ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-semibold hover:underline"
+                      style={symStyle}
+                      title={`${x.sym} on Yahoo Finance · ${delayLabel}${titleSuffix}`}
+                    >
+                      {x.sym}
+                    </a>
+                  ) : (
+                    <span className="text-[10px] font-semibold" style={symStyle}>
+                      {x.sym}
+                    </span>
+                  );
+                })()}
                 <span className="font-mono text-[9px] tabular-nums" style={{ color }}>
                   {up ? "+" : "−"}
                   {Math.abs(x.pct).toFixed(2)}%
@@ -165,6 +195,20 @@ export function Ticker({ initial }: { initial?: Quote[] } = {}) {
             </div>
           );
         })}
+      </div>
+      <div
+        className="mt-2 flex items-center justify-between font-mono text-[9px]"
+        style={{ color: "var(--muted)" }}
+      >
+        <a
+          href="https://finance.yahoo.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:underline"
+        >
+          Data: Yahoo Finance
+        </a>
+        <span>{maxDelay > 0 ? `Delayed up to ${maxDelay} min` : "Real time"}</span>
       </div>
     </div>
   );

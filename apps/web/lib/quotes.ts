@@ -7,6 +7,10 @@ export type Quote = {
   hist: number[];
   suffix?: string;
   watch?: boolean;
+  /** Yahoo Finance symbol for building the deep-link from the ticker. */
+  yahoo?: string;
+  /** Minutes the upstream delays the quote (Yahoo's `exchangeDataDelayedBy`). */
+  delayedBy?: number;
 };
 
 type SymbolDef = {
@@ -68,7 +72,12 @@ async function fetchOne(def: SymbolDef): Promise<Quote | null> {
     const json = (await res.json()) as {
       chart?: {
         result?: Array<{
-          meta?: { regularMarketPrice?: number; chartPreviousClose?: number; previousClose?: number };
+          meta?: {
+            regularMarketPrice?: number;
+            chartPreviousClose?: number;
+            previousClose?: number;
+            exchangeDataDelayedBy?: number;
+          };
           indicators?: { quote?: Array<{ close?: Array<number | null> }> };
         }>;
       };
@@ -79,6 +88,10 @@ async function fetchOne(def: SymbolDef): Promise<Quote | null> {
     const prev = result.meta.chartPreviousClose ?? result.meta.previousClose;
     if (typeof px !== "number" || typeof prev !== "number" || prev === 0) return null;
     const pct = ((px - prev) / prev) * 100;
+    const delayedBy =
+      typeof result.meta.exchangeDataDelayedBy === "number"
+        ? result.meta.exchangeDataDelayedBy
+        : undefined;
 
     const closes = result.indicators?.quote?.[0]?.close ?? [];
     const filtered = closes.filter((v): v is number => typeof v === "number" && Number.isFinite(v));
@@ -88,7 +101,16 @@ async function fetchOne(def: SymbolDef): Promise<Quote | null> {
     while (hist.length < HIST_POINTS) hist.unshift(hist[0]);
     if (hist.length > HIST_POINTS) hist = hist.slice(hist.length - HIST_POINTS);
 
-    return { sym: def.sym, px, pct, hist, suffix: def.suffix, watch: def.watch };
+    return {
+      sym: def.sym,
+      px,
+      pct,
+      hist,
+      suffix: def.suffix,
+      watch: def.watch,
+      yahoo: def.yahoo,
+      delayedBy,
+    };
   } catch {
     return null;
   }
