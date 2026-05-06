@@ -36,8 +36,22 @@ jobs:
       - name: Build and roll forward
         run: |
           set -euo pipefail
-          docker compose -f infra/docker-compose.prod.yml up -d --build
+          docker compose -f infra/docker-compose.prod.yml build
+          docker compose -f infra/docker-compose.prod.yml up -d --remove-orphans
           docker image prune -f
+
+      - name: Show service status
+        if: always()
+        run: |
+          docker compose -f infra/docker-compose.prod.yml ps
+          echo "---- migrate logs ----"
+          docker compose -f infra/docker-compose.prod.yml logs --no-color migrate || true
+          echo "---- api logs ----"
+          docker compose -f infra/docker-compose.prod.yml logs --no-color --tail=80 api || true
+          echo "---- scheduler logs ----"
+          docker compose -f infra/docker-compose.prod.yml logs --no-color --tail=40 scheduler || true
+          echo "---- web logs ----"
+          docker compose -f infra/docker-compose.prod.yml logs --no-color --tail=40 web || true
 
       - name: Wait for health
         run: |
