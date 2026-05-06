@@ -22,6 +22,9 @@
 - ESLint 10 deferred: `eslint-plugin-react@7.37.5` (dep of `eslint-config-next`) caps at `^9.7`; will unblock when upstream updates
 - HackerNews source adapter: fetches top 50 stories concurrently from Firebase API, no credentials required
 - **End-to-end pipeline live**: adapters → normalize → dedupe → topic-match → DB → API → frontend. Real headlines flow through every 15 min via scheduler container; topic pages now show live data instead of fixtures
+- API Dockerfile fix: copy source before `pip install` (Hatchling needs the package directory to exist, even for non-editable install)
+- `Settings.api_cors_origins` accepts plain string / comma-separated / JSON list via `NoDecode` + `field_validator` (caused first deploy outage)
+- Deploy workflow split into discrete `build` / `up -d` steps and dumps service logs on failure (`if: always()`) so future deploy issues are debuggable from the workflow output alone
 - Initial Alembic migration creates `articles`, `topics`, `topic_matches`, `sources`; deploy runs `alembic upgrade head` automatically
 - Production stack now includes `postgres`, `redis`, `migrate` (one-shot), `api`, `scheduler`, `web`
 - API routes wired: `/articles?topic=` joins through `topic_matches`, `/topics` returns 24h counts
