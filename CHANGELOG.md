@@ -17,3 +17,6 @@
 ### Confirmed live
 - Ticker on tenjin.us shows live Yahoo Finance market data (not fixture values)
 - Next.js 16.2.4: replaced `next lint` (removed in v16) with `eslint .`; migrated `.eslintrc.json` → `eslint.config.mjs` (ESLint flat config via `eslint-config-next/core-web-vitals`)
+- TypeScript ^5 → ^6.0.3: dropped redundant `baseUrl` from `tsconfig.json` to fix TS5101
+- vitest ^2 → ~4.0.18: ships vite@6 internally; clears all remaining audit vulnerabilities (esbuild + vite CVEs)
+- ESLint 10 deferred: `eslint-plugin-react@7.37.5` (dep of `eslint-config-next`) caps at `^9.7`; will unblock when upstream updates
