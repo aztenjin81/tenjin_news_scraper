@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTopic, listArticlesForTopic } from "@/lib/api";
-import { ArticleRow } from "@/components/ArticleRow";
-import { EmptyState } from "@/components/EmptyState";
+import { ArticleStream } from "@/components/ArticleStream";
 import { LiveIndicator } from "@/components/LiveIndicator";
 
 export const revalidate = 60;
@@ -79,15 +78,7 @@ export default async function TopicPage({ params }: { params: Promise<Params> })
         </div>
       </header>
 
-      {articles.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <ol className="divide-y divide-white/10 list-none p-0 m-0">
-          {articles.map((a) => (
-            <ArticleRow key={a.id} article={a} />
-          ))}
-        </ol>
-      )}
+      <ArticleStream slug={slug} initial={articles} />
     </div>
   );
 }

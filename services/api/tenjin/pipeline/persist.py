@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tenjin.models import Article, Topic, TopicMatch
 from tenjin.pipeline.normalize import normalize
+from tenjin.pipeline.publish import publish_article_to_topics
 from tenjin.pipeline.topic_match import match_topics
 from tenjin.sources.base import RawItem
 from tenjin.topics.registry import all_topics as registry_topics
@@ -20,7 +21,12 @@ MAX_AGE = timedelta(days=30)
 
 
 async def persist_items(session: AsyncSession, items: list[RawItem]) -> int:
-    """Upsert each item and matched topic links. Returns count of newly-inserted articles."""
+    """Upsert each item and matched topic links. Returns count of newly-inserted articles.
+
+    Newly-inserted articles are also published to Redis pubsub channels per
+    matched topic — *after* the commit succeeds — so SSE subscribers see them
+    in real time.
+    """
     if not items:
         return 0
 
@@ -30,7 +36,9 @@ async def persist_items(session: AsyncSession, items: list[RawItem]) -> int:
     now = datetime.now(UTC)
     cutoff = now - MAX_AGE
 
-    new_count = 0
+    # Collected during the loop so we can publish *after* commit.
+    new_inserts: list[tuple[UUID, list[str]]] = []
+
     for raw in items:
         if not raw.url or not raw.title:
             continue
@@ -48,8 +56,6 @@ async def persist_items(session: AsyncSession, items: list[RawItem]) -> int:
         article_data["snippet"] = _short(raw.body)
 
         article_id, was_new = await _upsert_article(session, article_data)
-        if was_new:
-            new_count += 1
 
         matched_slugs = match_topics(article_data, topics)
         for slug in matched_slugs:
@@ -57,8 +63,27 @@ async def persist_items(session: AsyncSession, items: list[RawItem]) -> int:
             if topic_id is not None:
                 await _upsert_topic_match(session, topic_id, article_id)
 
+        if was_new:
+            new_inserts.append((article_id, matched_slugs))
+
     await session.commit()
-    return new_count
+
+    # Publish *after* commit so subscribers never see articles that got rolled back.
+    if new_inserts:
+        await _publish_inserts(session, new_inserts)
+
+    return len(new_inserts)
+
+
+async def _publish_inserts(session: AsyncSession, inserts: list[tuple[UUID, list[str]]]) -> None:
+    ids = [aid for aid, _ in inserts]
+    rows = (await session.execute(select(Article).where(Article.id.in_(ids)))).scalars().all()
+    by_id = {a.id: a for a in rows}
+    for article_id, slugs in inserts:
+        article = by_id.get(article_id)
+        if article is None or not slugs:
+            continue
+        await publish_article_to_topics(article, slugs)
 
 
 async def _topic_ids_by_slug(session: AsyncSession) -> dict[str, UUID]:
