@@ -3,12 +3,20 @@
 ## [Unreleased]
 
 ### Added
+- Ad-hoc full-text search: `/articles?q=<phrase>` ANDs ILIKE matches across title and snippet (whitespace-tokenized, drops <2-char tokens, caps at 8 terms); new `/search` page renders SSR results and a client `SearchStream` polls every 30s for fresh matches via a same-origin Next.js proxy at `/api/articles` (#28)
+- SSE push for near-real-time topic feeds: `persist_items()` publishes new articles to Redis pubsub `topic:{slug}` after commit; `/stream/topic/{slug}` subscribes and forwards SSE frames; frontend `ArticleStream` subscribes via a same-origin Next.js proxy and prepends new items, deduping by id. Falls back to keepalive-only if Redis is unreachable so clients don't reconnect-storm (#27)
+- Ticker shows attribution + delay: each symbol links to its Yahoo Finance quote page; new footer line displays "Data: Yahoo Finance" and "Delayed up to N min" / "Real time" derived from upstream `meta.exchangeDataDelayedBy` (#26)
 - `SECURITY.md`, `CODEOWNERS`, and workflow `permissions: contents: read` hardening
 - CI workflow: typecheck, lint, vitest, pytest, gitleaks secret scan
 - Dependabot config for npm and GitHub Actions groups
 - GitHub Actions pinned to immutable commit SHAs (ci.yml + deploy.yml); Dependabot will keep them current
 
+### Changed
+- Default `SCRAPE_INTERVAL_SECONDS` lowered from 15 min → 5 min — realistic floor before free RSS feeds (Reddit, Yahoo, etc.) start returning 429s; sub-minute freshness lives on the SSE push path
+- Dependabot now ignores `eslint@10` (blocked by `eslint-plugin-react@7.37.5` capping at eslint^9.7), `vitest@4.1+` (requires vite^6 peer), and `@types/node@25` (kept failing the bundled dev-group PR) — stops the recurring failed PRs (#10, #12, #24)
+
 ### Fixed
+- RSS adapter parses ISO 8601 / Atom dates so `COALESCE(published_at, fetched_at)` sort actually uses publish time. Old `_parse_date` used `email.utils.parsedate_to_datetime` (RFC 2822 only) and silently returned `None` for Atom feeds. Now reads `entry.published_parsed` / `entry.updated_parsed` (already normalized by feedparser) and converts to aware UTC. Regression test asserts non-NULL `published_at` on Atom-shaped fixtures (#25)
 - `pnpm install --frozen-lockfile` removed from CI so Dependabot npm PRs can pass (lockfile is updated on the branch, not pre-frozen)
 - ruff B008 false positive for FastAPI `Query()` defaults suppressed via `ignore = ["B008"]`
 - ruff UP017 auto-fixed (`timezone.utc` → `datetime.UTC`) in `services/api/tenjin/sources/rss.py`
