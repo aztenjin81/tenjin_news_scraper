@@ -21,6 +21,11 @@
 - vitest ^2 → ~4.0.18: ships vite@6 internally; clears all remaining audit vulnerabilities (esbuild + vite CVEs)
 - ESLint 10 deferred: `eslint-plugin-react@7.37.5` (dep of `eslint-config-next`) caps at `^9.7`; will unblock when upstream updates
 - HackerNews source adapter: fetches top 50 stories concurrently from Firebase API, no credentials required
+- **End-to-end pipeline live**: adapters → normalize → dedupe → topic-match → DB → API → frontend. Real headlines flow through every 15 min via scheduler container; topic pages now show live data instead of fixtures
+- Initial Alembic migration creates `articles`, `topics`, `topic_matches`, `sources`; deploy runs `alembic upgrade head` automatically
+- Production stack now includes `postgres`, `redis`, `migrate` (one-shot), `api`, `scheduler`, `web`
+- API routes wired: `/articles?topic=` joins through `topic_matches`, `/topics` returns 24h counts
+- `Article.source_kind` + `snippet`; `is_breaking` computed at response time (< 20 min old)
 - Reddit RSS feeds: 9 subreddits registered (worldnews, news, geopolitics, technology, science, economics, finance, environment, climate)
 - `feeds.py`: central feed registry; `scrape.run_all()` iterates every configured feed
 - `RssAdapter`: adds `tenjin-news-bot/1.0` User-Agent to avoid Reddit rate-limiting
