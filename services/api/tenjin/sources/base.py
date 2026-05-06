@@ -10,6 +10,7 @@ class RawItem:
     url: str
     title: str
     outlet: str
+    source_kind: str = "wire"  # wire | regional | primary | social | analysis | state
     published_at: datetime | None = None
     author: str | None = None
     body: str | None = None

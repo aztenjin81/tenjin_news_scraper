@@ -12,14 +12,21 @@ GitHub (push to main)
    ▼  runner runs `docker compose up -d --build` in /opt/tenjin
    │
    OCI VM (129.153.206.53)
-   ├─ Docker: web container, bound 127.0.0.1:3000
+   ├─ Docker stack:
+   │   ├─ postgres (internal)
+   │   ├─ redis (internal)
+   │   ├─ migrate (one-shot, applies alembic head)
+   │   ├─ api (FastAPI, 127.0.0.1:8000)
+   │   ├─ scheduler (loops every SCRAPE_INTERVAL_SECONDS, runs all adapters)
+   │   └─ web (Next.js, 127.0.0.1:3000)
    └─ cloudflared (host service): tunnel → CF edge
                                        │
                                        ▼
                               tenjin.us (DNS managed by CF)
+                              api.tenjin.us (optional — see below)
 ```
 
-`api.tenjin.us` lights up the same way once the FastAPI service is wired into the compose stack.
+The web container reaches the API internally over the docker network at `http://api:8000`. If you want to expose the API publicly (e.g. for the browser-side ticker or third-party integrations) add a second public hostname in Cloudflare pointing at `localhost:8000` and set `NEXT_PUBLIC_API_BASE_URL=https://api.tenjin.us` in `/opt/tenjin/.env`.
 
 ## Safety posture
 
@@ -99,7 +106,14 @@ Back in the GitHub UI, the runner should now show **Idle** in the Runners list.
 
 ### 5. Per-deploy environment
 
-If you ever need to set `NEXT_PUBLIC_API_BASE_URL` (e.g. once the FastAPI service is live at `api.tenjin.us`), put it in `/opt/tenjin/.env` on the box. `docker compose` reads it automatically. Don't commit this file.
+Put per-host secrets and overrides in `/opt/tenjin/.env`. `docker compose` reads it automatically. Don't commit this file. Recognized keys:
+
+```
+POSTGRES_PASSWORD=...      # change from the default
+API_CORS_ORIGINS=https://tenjin.us
+NEXT_PUBLIC_API_BASE_URL=  # only if you exposed api.tenjin.us
+SCRAPE_INTERVAL_SECONDS=900
+```
 
 ## First deploy
 
@@ -109,13 +123,13 @@ git checkout main
 git push   # any change to apps/web/** triggers the workflow
 ```
 
-Or run it manually: GitHub → **Actions** → **Deploy web** → **Run workflow** → choose `main`.
+Or run it manually: GitHub → **Actions** → **Deploy** → **Run workflow** → choose `main`.
 
-Watch the run; on success, the workflow's "Wait for health" step has already confirmed the container responds on `127.0.0.1:3000`. Hit `https://tenjin.us` — it should serve the home page.
+Watch the run; on success, the workflow's "Wait for health" step has confirmed both `127.0.0.1:3000` (web) and `127.0.0.1:8000/health` (api) respond. Hit `https://tenjin.us` — it should serve the home page with real article data.
 
 ## Updating
 
-Every push to `main` that touches `apps/web/**`, `infra/docker-compose.prod.yml`, or the workflow itself rebuilds and rolls forward. Old containers are replaced via `docker compose up -d`. Old images are pruned after each deploy.
+Every push to `main` that touches `apps/web/**`, `services/api/**`, `infra/docker-compose.prod.yml`, or the workflow itself rebuilds and rolls forward. The `migrate` service runs alembic upgrades automatically on every deploy. Old containers are replaced via `docker compose up -d`. Old images are pruned after each deploy.
 
 ## Rolling back
 
@@ -139,6 +153,8 @@ docker compose -f infra/docker-compose.prod.yml up -d --build
 
 - **Workflow stuck "Waiting for runner"** → the self-hosted runner isn't running on the box. SSH in: `cd ~/actions-runner && sudo ./svc.sh status`.
 - **`tenjin.us` shows 502 / "Tunnel error"** → the web container isn't running. SSH in: `cd /opt/tenjin && docker compose -f infra/docker-compose.prod.yml ps`. If unhealthy, `docker compose logs web`.
+- **Articles aren't appearing** → check the scheduler: `docker compose -f infra/docker-compose.prod.yml logs scheduler`. It logs `scheduler.tick_done` every `SCRAPE_INTERVAL_SECONDS`. If it's quiet, the API container probably isn't healthy yet.
+- **Migration failures on deploy** → check `docker compose logs migrate`. Most often a hand-written migration with a typo. To roll back: `docker compose run --rm api alembic downgrade -1`.
 - **Build fails on `pnpm install`** → likely the lockfile drifted from `package.json`. Run `pnpm install` locally and commit the updated `pnpm-lock.yaml`.
 - **Out of disk space on the box** → `docker system prune -af --volumes`. The builder cache is the main consumer.
 - **Want to peek at the running site without DNS** → on the box, `curl -sI http://127.0.0.1:3000/`.

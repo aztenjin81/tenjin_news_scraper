@@ -67,6 +67,7 @@ async def _fetch_item(client: httpx.AsyncClient, item_id: int) -> RawItem | None
         url=url,
         title=data.get("title", "").strip(),
         outlet=_OUTLET,
+        source_kind="social",
         author=data.get("by"),
         published_at=published_at,
         body=data.get("text"),

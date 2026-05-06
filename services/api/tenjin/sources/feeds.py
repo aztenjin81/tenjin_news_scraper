@@ -11,24 +11,29 @@ from tenjin.sources.rss import RssAdapter
 
 _R = "https://www.reddit.com/r"
 
+
+def _reddit(slug: str) -> RssAdapter:
+    return RssAdapter(
+        name=f"reddit-{slug}",
+        feed_url=f"{_R}/{slug}/.rss",
+        outlet=f"r/{slug}",
+        source_kind="social",
+    )
+
+
 FEEDS = [
-    # ── HackerNews ────────────────────────────────────────────────────────────
     HackerNewsAdapter(limit=50),
-    # ── Reddit — general news ─────────────────────────────────────────────────
-    RssAdapter(name="reddit-worldnews", feed_url=f"{_R}/worldnews/.rss", outlet="r/worldnews"),
-    RssAdapter(name="reddit-news", feed_url=f"{_R}/news/.rss", outlet="r/news"),
-    RssAdapter(
-        name="reddit-geopolitics", feed_url=f"{_R}/geopolitics/.rss", outlet="r/geopolitics"
-    ),
-    # ── Reddit — tech & science ───────────────────────────────────────────────
-    RssAdapter(name="reddit-technology", feed_url=f"{_R}/technology/.rss", outlet="r/technology"),
-    RssAdapter(name="reddit-science", feed_url=f"{_R}/science/.rss", outlet="r/science"),
-    # ── Reddit — finance & economics ──────────────────────────────────────────
-    RssAdapter(name="reddit-economics", feed_url=f"{_R}/economics/.rss", outlet="r/economics"),
-    RssAdapter(name="reddit-finance", feed_url=f"{_R}/finance/.rss", outlet="r/finance"),
-    # ── Reddit — environment ──────────────────────────────────────────────────
-    RssAdapter(
-        name="reddit-environment", feed_url=f"{_R}/environment/.rss", outlet="r/environment"
-    ),
-    RssAdapter(name="reddit-climate", feed_url=f"{_R}/climate/.rss", outlet="r/climate"),
+    # General news
+    _reddit("worldnews"),
+    _reddit("news"),
+    _reddit("geopolitics"),
+    # Tech & science
+    _reddit("technology"),
+    _reddit("science"),
+    # Finance & economics
+    _reddit("economics"),
+    _reddit("finance"),
+    # Environment & climate
+    _reddit("environment"),
+    _reddit("climate"),
 ]

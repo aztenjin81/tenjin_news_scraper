@@ -1,4 +1,4 @@
-name: Deploy web
+name: Deploy
 
 # Self-hosted runner on the OCI box. The runner has docker access and
 # the working tree at /opt/tenjin — see infra/DEPLOY.md.
@@ -12,6 +12,7 @@ on:
     branches: [main]
     paths:
       - "apps/web/**"
+      - "services/api/**"
       - "infra/docker-compose.prod.yml"
       - ".github/workflows/deploy.yml"
       - "package.json"
@@ -40,13 +41,22 @@ jobs:
 
       - name: Wait for health
         run: |
-          for i in $(seq 1 20); do
-            if curl -fsS -o /dev/null http://127.0.0.1:3000/; then
-              echo "web is healthy"
-              exit 0
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 30); do
+            api_ok=$(curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/health 2>/dev/null || echo "0")
+            web_ok=$(curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/ 2>/dev/null || echo "0")
+            if [[ "$api_ok" == "200" && "$web_ok" == "200" ]]; then
+              echo "api + web are healthy"
+              ok=1
+              break
             fi
+            echo "waiting (api=$api_ok web=$web_ok) attempt $i/30"
             sleep 3
           done
-          echo "web did not become healthy in time"
-          docker compose -f infra/docker-compose.prod.yml logs --tail=80 web
-          exit 1
+          if [[ "$ok" -ne 1 ]]; then
+            echo "stack did not become healthy in time"
+            docker compose -f infra/docker-compose.prod.yml ps
+            docker compose -f infra/docker-compose.prod.yml logs --tail=80
+            exit 1
+          fi
