@@ -30,6 +30,7 @@ async def persist_items(session: AsyncSession, items: list[RawItem]) -> int:
         article_data = normalize(raw)
         article_data["fetched_at"] = datetime.now(UTC)
         article_data["source_kind"] = raw.source_kind
+        article_data["paywall"] = raw.paywall
         article_data["snippet"] = _short(raw.body)
 
         article_id, was_new = await _upsert_article(session, article_data)
@@ -64,6 +65,7 @@ async def _upsert_article(session: AsyncSession, data: dict) -> tuple[UUID, bool
         "snippet": stmt.excluded.snippet,
         "outlet": stmt.excluded.outlet,
         "source_kind": stmt.excluded.source_kind,
+        "paywall": stmt.excluded.paywall,
     }
     stmt = stmt.on_conflict_do_update(
         index_elements=["canonical_url"],

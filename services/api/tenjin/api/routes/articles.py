@@ -33,6 +33,7 @@ class ArticleOut(BaseModel):
     snippet: str | None = None
     lang: str | None = None
     is_breaking: bool = False
+    paywall: bool = False
 
 
 @router.get("", response_model=list[ArticleOut])
@@ -82,4 +83,5 @@ def _to_out(a: Article, now: datetime) -> ArticleOut:
         snippet=a.snippet,
         lang=a.lang,
         is_breaking=(now - fetched) < _BREAKING_THRESHOLD,
+        paywall=a.paywall,
     )
