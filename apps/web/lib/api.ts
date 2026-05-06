@@ -63,3 +63,24 @@ export async function listArticlesForTopic(
 
   return fixtureArticles(slug).slice(0, limit);
 }
+
+export async function searchArticles(
+  q: string,
+  opts: { limit?: number } = {},
+): Promise<Article[]> {
+  const limit = opts.limit ?? 50;
+  if (!q.trim()) return [];
+
+  try {
+    const params = new URLSearchParams({ q, limit: String(limit) });
+    const res = await fetch(`${API_BASE}/articles?${params}`, {
+      next: { revalidate: 30 },
+    });
+    if (res.ok) {
+      return (await res.json()) as Article[];
+    }
+  } catch {
+    // dev fallback — no fixture results for free-text search
+  }
+  return [];
+}

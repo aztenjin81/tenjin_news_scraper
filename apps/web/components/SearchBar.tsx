@@ -1,21 +1,23 @@
 "use client";
 
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { slugify } from "@/lib/topics";
 
 export function SearchBar() {
   const router = useRouter();
   const [v, setV] = useState("");
   const [focus, setFocus] = useState(false);
-  const slug = slugify(v);
-  const canSubmit = slug.length > 1;
+  const trimmed = v.trim();
+  const canSubmit = trimmed.length >= 2;
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (canSubmit) router.push(`/t/${slug}`);
+        if (canSubmit) {
+          router.push(`/search?q=${encodeURIComponent(trimmed)}` as Route);
+        }
       }}
       className="flex items-stretch overflow-hidden rounded-lg transition-colors duration-150"
       style={{
@@ -31,17 +33,17 @@ export function SearchBar() {
           borderRight: "1px solid rgba(255,255,255,0.06)",
         }}
       >
-        Topic
+        Search
       </span>
       <input
         value={v}
         onChange={(e) => setV(e.target.value)}
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
-        placeholder="Search any topic — iran, houthis, gaza…"
+        placeholder="Watch any phrase — shooting in arizona, ceasefire talks, election results…"
         className="flex-1 border-0 bg-transparent px-3.5 py-3.5 text-base outline-none"
         style={{ color: "var(--foreground)" }}
-        aria-label="Search any topic"
+        aria-label="Search articles"
       />
       <button
         type="submit"
@@ -53,7 +55,7 @@ export function SearchBar() {
           cursor: canSubmit ? "pointer" : "not-allowed",
         }}
       >
-        Open feed
+        Watch
       </button>
     </form>
   );
