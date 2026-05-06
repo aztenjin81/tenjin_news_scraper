@@ -1,0 +1,8 @@
+# Anything in these paths runs on the production self-hosted runner
+# or controls how production gets built. Force review by the repo owner.
+
+/.github/                  @aztenjin81
+/.github/workflows/        @aztenjin81
+/infra/                    @aztenjin81
+/apps/web/Dockerfile       @aztenjin81
+/apps/web/.dockerignore    @aztenjin81
