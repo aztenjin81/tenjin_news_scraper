@@ -1,0 +1,17 @@
+services:
+  web:
+    image: ghcr.io/aztenjin81/tenjin-web:${TENJIN_WEB_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
+    ports:
+      # Bind to loopback only — cloudflared on the host reaches us via 127.0.0.1.
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
