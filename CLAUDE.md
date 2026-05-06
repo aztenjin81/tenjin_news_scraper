@@ -4,14 +4,14 @@ Guidance for Claude Code (and other AI assistants) working in this repository.
 
 ## What this repo is
 
-Tenjin News is a topic-driven news aggregator. See `README.md` for the product pitch and `docs/architecture.md` (TODO) for the long-form design.
+Tenjin News is a topic-driven news aggregator. See `README.md` for the product pitch.
 
 ## Layout
 
 This is a monorepo with two deployable units:
 
 ```
-apps/web/          Next.js 15 (App Router, TS, Tailwind v4) — public site
+apps/web/          Next.js 16 (App Router, TS, Tailwind v4) — public site
 services/api/      FastAPI (Python 3.11+) — API + scraper workers
 infra/             docker-compose for local Postgres + Redis
 ```
@@ -31,15 +31,15 @@ Each package has its own `CLAUDE.md` with package-specific conventions. **Read i
 
 ## Local dev
 
-In this environment the docker daemon socket is root-owned, so `docker` needs `sudo` (passwordless sudo is configured — no prompt).
-
 ```bash
-# Bring up Postgres + Redis
-sudo docker compose -f infra/docker-compose.yml up -d
+# Bring up Postgres + Redis (Linux: prefix with `sudo` if the docker socket is root-owned)
+docker compose -f infra/docker-compose.yml up -d
 
 # Backend (in one terminal)
 cd services/api
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+# Linux/macOS:  source .venv/bin/activate
+# Windows PS:   .venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
 uvicorn tenjin.api.app:app --reload
 
@@ -51,7 +51,7 @@ pnpm dev
 
 ## When adding a feature
 
-- **New source**: add an adapter under `services/api/tenjin/sources/` implementing `SourceAdapter`. Register it in `sources/registry.py`. Add a fixture-backed test in `services/api/tests/sources/`.
+- **New source**: add an adapter under `services/api/tenjin/sources/` implementing `SourceAdapter` and register the adapter class in `sources/registry.py`. For RSS/Atom feeds, also add the feed URL to `sources/feeds.py` (the central feed list iterated by `scrape.run_all()`). Add a fixture-backed test in `services/api/tests/sources/`.
 - **New API route**: add to `services/api/tenjin/api/routes/`. Keep route handlers thin — push logic into `pipeline/` or service modules.
 - **New page**: add under `apps/web/app/`. Pages that should be SEO-indexed must export `generateMetadata` and use SSR (no `"use client"` at the page root).
 - **Schema change**: edit the SQLAlchemy model, then `alembic revision --autogenerate -m "..."`, review the generated migration, commit both.

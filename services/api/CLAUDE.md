@@ -6,20 +6,42 @@ FastAPI app + scraper workers. Read this before editing under `services/api/`.
 
 ```
 tenjin/
-├── api/              HTTP layer (FastAPI app, routes, dependencies)
-│   ├── app.py        App factory + middleware + router registration
-│   ├── deps.py       Shared FastAPI dependencies (db session, settings)
-│   └── routes/       One file per resource. Handlers stay thin.
-├── sources/          Source adapters. One file per source family.
-│   ├── base.py       SourceAdapter protocol + shared helpers
-│   ├── registry.py   Maps source name → adapter class
-│   └── ...           rss.py, html.py, gdelt.py, ...
-├── pipeline/         Normalize → dedupe → topic-match → persist
-├── topics/           Topic definitions, query parsing, entity rules
-├── models/           SQLAlchemy ORM models
-├── db/               Engine, session, migrations
-├── workers/          RQ job definitions (called by `rq worker`)
-└── config.py         pydantic-settings — single source of truth for env
+├── api/                       HTTP layer (FastAPI app, routes, dependencies)
+│   ├── app.py                 App factory + middleware + router registration
+│   ├── deps.py                Shared FastAPI dependencies (db session, settings)
+│   ├── routes/
+│   │   ├── articles.py        /articles (topic, q, before filters)
+│   │   ├── topics.py          /topics (24h counts)
+│   │   ├── stream.py          /stream/topic/{slug} — SSE, subscribes to Redis pubsub
+│   │   └── health.py
+│   └── schemas/
+│       └── article.py         ArticleOut + to_article_out() — wire shape, shared by routes and SSE
+├── sources/                   Source adapters. One file per source family.
+│   ├── base.py                SourceAdapter protocol + shared helpers
+│   ├── registry.py            Maps source name → adapter class
+│   ├── feeds.py               Central RSS/Atom feed registry (URLs + topic hints), iterated by scrape.run_all()
+│   ├── rss.py                 Generic RSS/Atom adapter (used by every entry in feeds.py)
+│   └── hackernews.py          Firebase top-50 adapter
+├── pipeline/                  Normalize → dedupe → topic-match → persist → publish
+│   ├── normalize.py           RawItem → canonical Article fields
+│   ├── dedupe.py              URL + title fingerprint
+│   ├── topic_match.py         Topic registry → topic_matches rows
+│   ├── persist.py             persist_items() — writes Articles + topic_matches in one tx
+│   ├── publish.py             publish_article_to_topics() — Redis pubsub fanout (best-effort, post-commit)
+│   └── prune.py               Drops articles older than max-age
+├── topics/                    Topic definitions, query parsing, entity rules
+│   ├── registry.py
+│   └── presets.py
+├── models/                    SQLAlchemy ORM models (data only — no business logic)
+├── db/
+│   ├── session.py             Async engine + session factory
+│   ├── redis.py               Lazy singleton Redis client (decode_responses=True)
+│   ├── bootstrap.py           Optional create-all for local dev
+│   └── migrations/            Alembic
+├── workers/
+│   ├── scrape.py              run_all() — iterate feeds, run pipeline
+│   └── scheduler.py           APScheduler loop, calls scrape.run_all every SCRAPE_INTERVAL_SECONDS
+└── config.py                  pydantic-settings — single source of truth for env
 ```
 
 ## Conventions
@@ -30,12 +52,13 @@ tenjin/
 - **Settings.** All env access goes through `tenjin.config.Settings`. Don't `os.getenv` from feature code.
 - **Logging.** `structlog`, key-value style. Include `source`, `url`, `topic` where relevant.
 - **Errors from sources are normal.** Adapters must not raise to the worker; they log and return an empty list. The worker keeps going.
+- **Redis pubsub is best-effort and post-commit.** `pipeline.publish.publish_article_to_topics()` runs *after* `session.commit()` succeeds in `persist_items()`, never before — never publish data that could be rolled back. The publish call is wrapped in try/except: a Redis outage logs and continues, and persistence must never block on it.
 
 ## Adding a source adapter
 
 1. New file under `tenjin/sources/<name>.py`.
 2. Implement `SourceAdapter` from `sources/base.py` — `name`, `fetch() -> list[RawItem]`.
-3. Register in `sources/registry.py`.
+3. Register the adapter **class** in `sources/registry.py` (maps source name → adapter class). For RSS/Atom feeds reusing `rss.RssAdapter`, also append the feed **URL** (and topic hints) to `sources/feeds.py` — that's what `scrape.run_all()` iterates.
 4. Add a fixture under `tests/sources/fixtures/<name>/` and a test that asserts at least one normalized article comes out.
 5. If the source needs credentials, add the env var to `infra/.env.example` and read it through `config.Settings`.
 
