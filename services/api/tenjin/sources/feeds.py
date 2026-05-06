@@ -159,12 +159,8 @@ FEEDS = [
         "RT",
         "state",
     ),
-    _rss(
-        "xinhua",
-        "http://www.xinhuanet.com/english/rss/worldrss.xml",
-        "Xinhua",
-        "state",
-    ),
+    # Xinhua removed — public RSS endpoint emits articles dated as far back
+    # as 2017 with stale URLs that 404. Re-add if/when they ship a real feed.
     _rss(
         "al-mayadeen",
         "https://english.almayadeen.net/rss",

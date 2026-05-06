@@ -6,6 +6,7 @@ import structlog
 
 from tenjin.db.session import SessionLocal
 from tenjin.pipeline.persist import persist_items
+from tenjin.pipeline.prune import prune_old_articles
 from tenjin.sources.base import SourceAdapter
 from tenjin.sources.feeds import FEEDS
 from tenjin.topics import presets, registry
@@ -38,6 +39,10 @@ async def run_all() -> dict[str, int]:
         except Exception as e:
             log.error("adapter.run_failed", source=adapter.name, error=str(e))
             results[adapter.name] = 0
+    try:
+        await prune_old_articles()
+    except Exception as e:
+        log.error("scrape.prune_failed", error=str(e))
     return results
 
 

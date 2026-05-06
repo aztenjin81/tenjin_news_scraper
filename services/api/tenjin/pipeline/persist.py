@@ -1,6 +1,6 @@
 """Upsert normalized articles into the DB and link them to matching topics."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import literal_column, select
@@ -13,6 +13,11 @@ from tenjin.pipeline.topic_match import match_topics
 from tenjin.sources.base import RawItem
 from tenjin.topics.registry import all_topics as registry_topics
 
+# Articles older than this are dropped at the pipeline boundary. We're a news
+# aggregator, not an archive — and broken/stale RSS feeds (e.g. abandoned
+# state-media endpoints) routinely emit headlines from years ago.
+MAX_AGE = timedelta(days=30)
+
 
 async def persist_items(session: AsyncSession, items: list[RawItem]) -> int:
     """Upsert each item and matched topic links. Returns count of newly-inserted articles."""
@@ -22,13 +27,22 @@ async def persist_items(session: AsyncSession, items: list[RawItem]) -> int:
     topic_id_by_slug = await _topic_ids_by_slug(session)
     topics = registry_topics()
 
+    now = datetime.now(UTC)
+    cutoff = now - MAX_AGE
+
     new_count = 0
     for raw in items:
         if not raw.url or not raw.title:
             continue
 
+        # Drop ancient items that broken/abandoned feeds keep emitting.
+        # Items without a pubDate are kept (we trust they're roughly current
+        # since we just fetched them).
+        if raw.published_at is not None and raw.published_at < cutoff:
+            continue
+
         article_data = normalize(raw)
-        article_data["fetched_at"] = datetime.now(UTC)
+        article_data["fetched_at"] = now
         article_data["source_kind"] = raw.source_kind
         article_data["paywall"] = raw.paywall
         article_data["snippet"] = _short(raw.body)
