@@ -97,7 +97,7 @@ def classify(
 
 
 def _canonical_feeds():
-    """Iterate the configured feed list. Yields adapter instances with
+    """Iterate the configured feed list. Returns adapter instances with
     name / outlet / source_kind / cadence. Wrapped in a function so tests
     can monkeypatch it without touching FEEDS."""
     from tenjin.sources.feeds import FEEDS  # late import to avoid cycles
