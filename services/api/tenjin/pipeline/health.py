@@ -1,6 +1,8 @@
 """Per-fetch telemetry capture and (later) feed-health classification."""
 
-from datetime import datetime
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
+from typing import Literal
 
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,3 +41,55 @@ async def record_fetch(
     except Exception as e:
         log.warning("health.record_fetch_failed", source=source, error=str(e))
         await session.rollback()
+
+
+Cadence = Literal["fast", "normal", "slow", "rare"]
+Status = Literal["ok", "lagging", "silent"]
+
+CADENCE_INTERVALS: dict[Cadence, timedelta] = {
+    "fast": timedelta(minutes=30),
+    "normal": timedelta(hours=2),
+    "slow": timedelta(hours=12),
+    "rare": timedelta(days=3),
+}
+
+ERROR_STREAK_THRESHOLD = 5
+
+
+@dataclass(frozen=True, slots=True)
+class FeedHealth:
+    name: str
+    label: str
+    kind: str
+    cadence: Cadence
+    last_item_at: datetime | None
+    items_24h: int
+    status: Status
+
+
+@dataclass(frozen=True, slots=True)
+class FeedHealthReport:
+    summary: dict[str, int]
+    feeds: list[FeedHealth]
+    generated_at: datetime
+
+
+def classify(
+    *,
+    cadence: Cadence,
+    last_item_at: datetime | None,
+    recent_error_streak: int,
+) -> Status:
+    """Status for one feed. Errors override age — five consecutive failed
+    fetches mean silent regardless of when the last item arrived."""
+    if recent_error_streak >= ERROR_STREAK_THRESHOLD:
+        return "silent"
+    if last_item_at is None:
+        return "silent"
+    interval = CADENCE_INTERVALS[cadence]
+    age = datetime.now(UTC) - last_item_at
+    if age <= interval:
+        return "ok"
+    if age <= 3 * interval:
+        return "lagging"
+    return "silent"
