@@ -13,6 +13,7 @@ Candidates surfaced during brainstorming. Each one becomes its own spec → plan
 - **Article hover preview** — snippet, fetched_at, paywall flag without leaving the feed.
 - **Per-topic OG share image** — generated card from latest 3 headlines.
 - **Outlet-link source labels on `/sources`** — ABC News links to abcnews.go.com, Tehran Times links to tehrantimes.com, etc. Likely add a `home_url` attribute to each adapter (or derive from feed URL netloc as fallback). Worth extending to article rows / `SourcePill` once we ship it for `/sources`.
+- **Live-updating `/sources` telemetry** — current page is SSR + 30s ISR, so you have to reload to see status changes. Make it tick. Two options: (a) client-side poll `/api/sources` every ~15s and re-render count tiles + rows (simplest; mirror the `SearchStream` pattern); (b) SSE push from the API when a `feed_fetch_log` row lands (mirror the existing `/stream/topic/{slug}` pattern; needs a Redis pubsub channel emitted from `record_fetch`, post-commit). Option (a) ships fast; (b) is the right shape long-term and matches the existing live-update infra.
 
 ## Info tracking / analytics
 
