@@ -26,6 +26,7 @@ class RssAdapter(SourceAdapter):
     outlet: str
     source_kind: str = "wire"
     paywall: bool = False
+    cadence: str = "normal"
     user_agent: str = _DEFAULT_UA
 
     async def fetch(self) -> list[RawItem]:

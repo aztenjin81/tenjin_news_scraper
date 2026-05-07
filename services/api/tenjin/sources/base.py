@@ -27,6 +27,7 @@ class SourceAdapter(Protocol):
     """
 
     name: str
+    cadence: str  # "fast" | "normal" | "slow" | "rare" — expected new-content interval
 
     async def fetch(self) -> list[RawItem]: ...
 
