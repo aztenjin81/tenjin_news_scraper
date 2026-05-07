@@ -29,3 +29,15 @@ class SourceAdapter(Protocol):
     name: str
 
     async def fetch(self) -> list[RawItem]: ...
+
+
+class SearchAdapter(Protocol):
+    """Query-aware source. Called from the API request path with a user query.
+
+    Same RawItem output, same error contract as SourceAdapter (log and return []
+    on failure — never raise to the caller).
+    """
+
+    name: str
+
+    async def search(self, q: str) -> list[RawItem]: ...

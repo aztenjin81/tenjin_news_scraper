@@ -1,0 +1,49 @@
+{
+  "hits": [
+    {
+      "objectID": "39000001",
+      "title": "Rust 1.85 released",
+      "url": "https://blog.rust-lang.org/2026/05/01/Rust-1.85.html",
+      "author": "steveklabnik",
+      "points": 842,
+      "num_comments": 312,
+      "created_at": "2026-05-01T16:00:00.000Z",
+      "_tags": ["story", "author_steveklabnik", "story_39000001"]
+    },
+    {
+      "objectID": "39000002",
+      "title": "Why Rust's borrow checker is the best thing since sliced bread",
+      "url": "https://example.com/rust-borrow-checker",
+      "author": "ferrous_systems",
+      "points": 412,
+      "num_comments": 158,
+      "created_at": "2026-04-29T09:30:00.000Z",
+      "_tags": ["story", "author_ferrous_systems"]
+    },
+    {
+      "objectID": "39000003",
+      "title": "Ask HN: Best resources to learn Rust in 2026?",
+      "url": null,
+      "author": "newbie42",
+      "points": 95,
+      "num_comments": 187,
+      "created_at": "2026-04-28T22:14:00.000Z",
+      "_tags": ["story", "ask_hn", "author_newbie42"]
+    },
+    {
+      "objectID": "39000004",
+      "title": "Rust adoption at NYTimes engineering",
+      "url": "https://open.nytimes.com/rust-adoption-2026",
+      "author": "nyt_eng",
+      "points": 287,
+      "num_comments": 94,
+      "created_at": "2026-04-27T13:00:00.000Z",
+      "_tags": ["story", "author_nyt_eng"]
+    }
+  ],
+  "nbHits": 4,
+  "page": 0,
+  "nbPages": 1,
+  "hitsPerPage": 50,
+  "query": "rust"
+}
