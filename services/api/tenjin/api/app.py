@@ -4,7 +4,7 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from tenjin.api.routes import articles, health, stream, topics
+from tenjin.api.routes import articles, health, sources, stream, topics
 from tenjin.config import get_settings
 from tenjin.db.bootstrap import install_topics
 from tenjin.pipeline.prune import prune_old_articles, prune_old_fetch_logs
@@ -48,6 +48,7 @@ def create_app() -> FastAPI:
     app.include_router(articles.router, prefix="/articles", tags=["articles"])
     app.include_router(topics.router, prefix="/topics", tags=["topics"])
     app.include_router(stream.router, prefix="/stream", tags=["stream"])
+    app.include_router(sources.router, prefix="/sources", tags=["sources"])
 
     return app
 

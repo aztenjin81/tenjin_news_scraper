@@ -40,6 +40,13 @@ export function Header({ current }: Props) {
           >
             About
           </Link>
+          <Link
+            href="/sources"
+            className="transition-colors duration-150 hover:text-white"
+            style={{ color: current === "sources" ? "var(--foreground)" : "var(--muted)" }}
+          >
+            Sources
+          </Link>
         </nav>
       </div>
     </header>

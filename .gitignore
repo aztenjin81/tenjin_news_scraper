@@ -58,3 +58,12 @@ out/
 
 # Brainstorm companion sessions
 .superpowers/
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Page-test screenshots used during dev smoke checks
+sources-*.png
+
+# pnpm-only project; npm lockfile is a mistake if it appears
+apps/web/package-lock.json

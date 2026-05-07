@@ -22,6 +22,7 @@ class HackerNewsAdapter(SourceAdapter):
 
     name: str = "hackernews"
     source_kind: str = "social"
+    outlet: str = "Hacker News"
     cadence: str = "fast"
     limit: int = field(default=50)
 
