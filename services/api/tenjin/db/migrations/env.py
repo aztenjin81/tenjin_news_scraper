@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -6,6 +7,11 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
+
+# psycopg async requires SelectorEventLoop on Windows; the default ProactorEventLoop
+# raises InterfaceError. Linux/macOS already use a compatible loop, so this is no-op there.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Import all models so Base.metadata sees every table.
 from tenjin.config import get_settings
