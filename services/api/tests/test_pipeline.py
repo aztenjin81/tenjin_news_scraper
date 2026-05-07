@@ -275,3 +275,52 @@ async def test_prune_old_articles_deletes_stale_rows():
     async with SessionLocal() as session:
         urls = (await session.execute(select(Article.canonical_url))).scalars().all()
         assert urls == ["https://example.com/y"]
+
+
+async def test_prune_old_fetch_logs_drops_only_old_rows():
+    """30-day retention on feed_fetch_log."""
+    from datetime import timedelta
+
+    from sqlalchemy import delete, select
+
+    from tenjin.models import FeedFetchLog
+    from tenjin.pipeline.prune import prune_old_fetch_logs
+
+    now = datetime.now(UTC)
+    async with SessionLocal() as session:
+        await session.execute(
+            delete(FeedFetchLog).where(FeedFetchLog.source == "prune-test")
+        )
+        session.add_all([
+            FeedFetchLog(
+                source="prune-test", fetched_at=now - timedelta(days=10),
+                duration_ms=1, error_kind="none",
+            ),
+            FeedFetchLog(
+                source="prune-test", fetched_at=now - timedelta(days=25),
+                duration_ms=1, error_kind="none",
+            ),
+            FeedFetchLog(
+                source="prune-test", fetched_at=now - timedelta(days=45),
+                duration_ms=1, error_kind="none",
+            ),
+        ])
+        await session.commit()
+
+    deleted = await prune_old_fetch_logs(max_age_days=30)
+    assert deleted == 1
+
+    async with SessionLocal() as session:
+        rows = (
+            await session.execute(
+                select(FeedFetchLog).where(FeedFetchLog.source == "prune-test")
+            )
+        ).scalars().all()
+    assert len(rows) == 2
+
+    # Cleanup so we don't leave test rows around
+    async with SessionLocal() as session:
+        await session.execute(
+            delete(FeedFetchLog).where(FeedFetchLog.source == "prune-test")
+        )
+        await session.commit()
