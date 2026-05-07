@@ -27,15 +27,11 @@ async def _clean_fetch_log():
     if not await _db_reachable():
         pytest.skip("Postgres not reachable")
     async with SessionLocal() as session:
-        await session.execute(
-            delete(FeedFetchLog).where(FeedFetchLog.source.like("test-%"))
-        )
+        await session.execute(delete(FeedFetchLog).where(FeedFetchLog.source.like("test-%")))
         await session.commit()
     yield
     async with SessionLocal() as session:
-        await session.execute(
-            delete(FeedFetchLog).where(FeedFetchLog.source.like("test-%"))
-        )
+        await session.execute(delete(FeedFetchLog).where(FeedFetchLog.source.like("test-%")))
         await session.commit()
 
 
@@ -54,10 +50,14 @@ async def test_record_fetch_inserts_one_row():
         )
     async with SessionLocal() as session:
         rows = (
-            await session.execute(
-                select(FeedFetchLog).where(FeedFetchLog.source == "test-source")
+            (
+                await session.execute(
+                    select(FeedFetchLog).where(FeedFetchLog.source == "test-source")
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     assert len(rows) == 1
     row = rows[0]
     assert row.source == "test-source"

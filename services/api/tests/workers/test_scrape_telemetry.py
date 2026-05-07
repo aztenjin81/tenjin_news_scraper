@@ -72,10 +72,10 @@ async def test_run_adapter_records_success():
     await run_adapter(_FakeAdapter())
     async with SessionLocal() as session:
         rows = (
-            await session.execute(
-                select(FeedFetchLog).where(FeedFetchLog.source == "fake")
-            )
-        ).scalars().all()
+            (await session.execute(select(FeedFetchLog).where(FeedFetchLog.source == "fake")))
+            .scalars()
+            .all()
+        )
     assert len(rows) == 1
     row = rows[0]
     assert row.error_kind == "none"
@@ -88,13 +88,17 @@ async def test_run_adapter_records_timeout():
     await run_adapter(_RaisingAdapter())
     async with SessionLocal() as session:
         rows = (
-            await session.execute(
-                select(FeedFetchLog)
-                .where(FeedFetchLog.source == "raising")
-                .order_by(FeedFetchLog.fetched_at.desc())
-                .limit(1)
+            (
+                await session.execute(
+                    select(FeedFetchLog)
+                    .where(FeedFetchLog.source == "raising")
+                    .order_by(FeedFetchLog.fetched_at.desc())
+                    .limit(1)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     assert len(rows) == 1
     assert rows[0].error_kind == "timeout"
     assert rows[0].items_yielded == 0

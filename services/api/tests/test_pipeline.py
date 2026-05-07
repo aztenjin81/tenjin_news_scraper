@@ -288,23 +288,29 @@ async def test_prune_old_fetch_logs_drops_only_old_rows():
 
     now = datetime.now(UTC)
     async with SessionLocal() as session:
-        await session.execute(
-            delete(FeedFetchLog).where(FeedFetchLog.source == "prune-test")
+        await session.execute(delete(FeedFetchLog).where(FeedFetchLog.source == "prune-test"))
+        session.add_all(
+            [
+                FeedFetchLog(
+                    source="prune-test",
+                    fetched_at=now - timedelta(days=10),
+                    duration_ms=1,
+                    error_kind="none",
+                ),
+                FeedFetchLog(
+                    source="prune-test",
+                    fetched_at=now - timedelta(days=25),
+                    duration_ms=1,
+                    error_kind="none",
+                ),
+                FeedFetchLog(
+                    source="prune-test",
+                    fetched_at=now - timedelta(days=45),
+                    duration_ms=1,
+                    error_kind="none",
+                ),
+            ]
         )
-        session.add_all([
-            FeedFetchLog(
-                source="prune-test", fetched_at=now - timedelta(days=10),
-                duration_ms=1, error_kind="none",
-            ),
-            FeedFetchLog(
-                source="prune-test", fetched_at=now - timedelta(days=25),
-                duration_ms=1, error_kind="none",
-            ),
-            FeedFetchLog(
-                source="prune-test", fetched_at=now - timedelta(days=45),
-                duration_ms=1, error_kind="none",
-            ),
-        ])
         await session.commit()
 
     deleted = await prune_old_fetch_logs(max_age_days=30)
@@ -312,15 +318,13 @@ async def test_prune_old_fetch_logs_drops_only_old_rows():
 
     async with SessionLocal() as session:
         rows = (
-            await session.execute(
-                select(FeedFetchLog).where(FeedFetchLog.source == "prune-test")
-            )
-        ).scalars().all()
+            (await session.execute(select(FeedFetchLog).where(FeedFetchLog.source == "prune-test")))
+            .scalars()
+            .all()
+        )
     assert len(rows) == 2
 
     # Cleanup so we don't leave test rows around
     async with SessionLocal() as session:
-        await session.execute(
-            delete(FeedFetchLog).where(FeedFetchLog.source == "prune-test")
-        )
+        await session.execute(delete(FeedFetchLog).where(FeedFetchLog.source == "prune-test"))
         await session.commit()

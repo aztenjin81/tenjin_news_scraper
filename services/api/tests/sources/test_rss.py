@@ -100,12 +100,14 @@ async def test_fetch_parses_iso8601_dates(httpx_mock: HTTPXMock) -> None:
 
 def test_rss_adapter_default_cadence_is_normal():
     from tenjin.sources.rss import RssAdapter
+
     a = RssAdapter(name="x", feed_url="http://e.example", outlet="X", source_kind="wire")
     assert a.cadence == "normal"
 
 
 def test_rss_adapter_cadence_override():
     from tenjin.sources.rss import RssAdapter
+
     a = RssAdapter(
         name="x",
         feed_url="http://e.example",
@@ -118,5 +120,6 @@ def test_rss_adapter_cadence_override():
 
 def test_hackernews_adapter_default_cadence_is_fast():
     from tenjin.sources.hackernews import HackerNewsAdapter
+
     a = HackerNewsAdapter()
     assert a.cadence == "fast"

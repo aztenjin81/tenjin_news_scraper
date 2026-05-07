@@ -28,9 +28,7 @@ async def prune_old_fetch_logs(max_age_days: int = 30) -> int:
     """Delete feed_fetch_log rows older than max_age_days. Returns rowcount."""
     cutoff = datetime.now(UTC) - timedelta(days=max_age_days)
     async with SessionLocal() as session:
-        result = await session.execute(
-            delete(FeedFetchLog).where(FeedFetchLog.fetched_at < cutoff)
-        )
+        result = await session.execute(delete(FeedFetchLog).where(FeedFetchLog.fetched_at < cutoff))
         await session.commit()
     deleted = result.rowcount or 0
     if deleted:
