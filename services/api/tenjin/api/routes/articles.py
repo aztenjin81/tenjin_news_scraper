@@ -1,11 +1,15 @@
 from datetime import UTC, datetime
 
+import structlog
 from fastapi import APIRouter, Query
 from sqlalchemy import func, or_, select
 
 from tenjin.api.deps import SessionDep
 from tenjin.api.schemas.article import ArticleOut, to_article_out
 from tenjin.models import Article, Topic, TopicMatch
+from tenjin.pipeline.search_fetch import fetch_for_query
+
+log = structlog.get_logger(__name__)
 
 router = APIRouter()
 
@@ -38,6 +42,15 @@ async def list_articles(
 
     if q:
         terms = _parse_query(q)
+        if not terms:
+            return []
+        # Best-effort live augmentation. fetch_for_query swallows its own
+        # exceptions internally; this try/except is belt-and-suspenders so a
+        # future change there can't silently start propagating to the route.
+        try:
+            await fetch_for_query(q)
+        except Exception as e:
+            log.warning("articles.search_fetch_failed", q=q, topic=topic, error=str(e))
         for term in terms:
             pattern = f"%{term}%"
             stmt = stmt.where(
@@ -46,10 +59,6 @@ async def list_articles(
                     Article.snippet.ilike(pattern),
                 )
             )
-        # If after parsing nothing remains (e.g. the query was just punctuation),
-        # short-circuit: a too-broad query shouldn't return everything.
-        if not terms:
-            return []
 
     if before:
         stmt = stmt.where(display_at < before)
