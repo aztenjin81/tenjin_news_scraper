@@ -22,6 +22,7 @@ class HackerNewsAdapter(SourceAdapter):
 
     name: str = "hackernews"
     source_kind: str = "social"
+    cadence: str = "fast"
     limit: int = field(default=50)
 
     async def fetch(self) -> list[RawItem]:

@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from tenjin.api.routes import articles, health, stream, topics
 from tenjin.config import get_settings
 from tenjin.db.bootstrap import install_topics
-from tenjin.pipeline.prune import prune_old_articles
+from tenjin.pipeline.prune import prune_old_articles, prune_old_fetch_logs
 
 log = structlog.get_logger(__name__)
 
@@ -24,6 +24,11 @@ async def lifespan(app: FastAPI):
         log.info("app.prune_complete", deleted=deleted)
     except Exception as e:
         log.warning("app.prune_failed", error=str(e))
+    try:
+        deleted = await prune_old_fetch_logs()
+        log.info("app.prune_fetch_logs_complete", deleted=deleted)
+    except Exception as e:
+        log.warning("app.prune_fetch_logs_failed", error=str(e))
     yield
 
 

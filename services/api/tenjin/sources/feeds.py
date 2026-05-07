@@ -16,17 +16,33 @@ from tenjin.sources.rss import RssAdapter
 _R = "https://www.reddit.com/r"
 
 
-def _reddit(slug: str) -> RssAdapter:
+def _reddit(slug: str, *, cadence: str = "fast") -> RssAdapter:
     return RssAdapter(
         name=f"reddit-{slug}",
         feed_url=f"{_R}/{slug}/.rss",
         outlet=f"r/{slug}",
         source_kind="social",
+        cadence=cadence,
     )
 
 
-def _rss(name: str, url: str, outlet: str, kind: str, *, paywall: bool = False) -> RssAdapter:
-    return RssAdapter(name=name, feed_url=url, outlet=outlet, source_kind=kind, paywall=paywall)
+def _rss(
+    name: str,
+    url: str,
+    outlet: str,
+    kind: str,
+    *,
+    paywall: bool = False,
+    cadence: str = "normal",
+) -> RssAdapter:
+    return RssAdapter(
+        name=name,
+        feed_url=url,
+        outlet=outlet,
+        source_kind=kind,
+        paywall=paywall,
+        cadence=cadence,
+    )
 
 
 FEEDS = [
@@ -49,6 +65,7 @@ FEEDS = [
         "https://apnews.com/index.rss",
         "AP",
         "wire",
+        cadence="fast",
     ),
     # ── Regional outlets ──────────────────────────────────────────────────────
     _rss(
@@ -56,6 +73,7 @@ FEEDS = [
         "https://www.aljazeera.com/xml/rss/all.xml",
         "Al Jazeera",
         "regional",
+        cadence="normal",
     ),
     _rss(
         "times-of-israel",
@@ -63,6 +81,7 @@ FEEDS = [
         "Times of Israel",
         "regional",
         paywall=True,  # metered — most readers hit the wall after a few articles
+        cadence="normal",
     ),
     _rss(
         "haaretz",
@@ -70,18 +89,21 @@ FEEDS = [
         "Haaretz",
         "regional",
         paywall=True,  # hard paywall after the lede
+        cadence="normal",
     ),
     _rss(
         "arab-news",
         "https://www.arabnews.com/rss.xml",
         "Arab News",
         "regional",
+        cadence="normal",
     ),
     _rss(
         "the-cradle",
         "https://thecradle.co/feed",
         "The Cradle",
         "regional",
+        cadence="normal",
     ),
     # Ukrainian outlets
     _rss(
@@ -90,18 +112,21 @@ FEEDS = [
         "Kyiv Independent",
         "regional",
         paywall=True,  # metered — soft wall on long-form pieces
+        cadence="normal",
     ),
     _rss(
         "ukrainska-pravda",
         "https://www.pravda.com.ua/eng/rss/",
         "Ukrainska Pravda",
         "regional",
+        cadence="normal",
     ),
     _rss(
         "euromaidan-press",
         "https://euromaidanpress.com/feed/",
         "Euromaidan Press",
         "regional",
+        cadence="normal",
     ),
     # Russian-independent (anti-Kremlin, exiled)
     _rss(
@@ -109,6 +134,7 @@ FEEDS = [
         "https://meduza.io/en/rss/all",
         "Meduza",
         "regional",
+        cadence="normal",
     ),
     _rss(
         "moscow-times",
@@ -116,6 +142,7 @@ FEEDS = [
         "Moscow Times",
         "regional",
         paywall=True,  # some long-form pieces are subscriber-only
+        cadence="normal",
     ),
     # Central / Eastern Europe
     _rss(
@@ -123,6 +150,7 @@ FEEDS = [
         "https://notesfrompoland.com/feed/",
         "Notes from Poland",
         "regional",
+        cadence="normal",
     ),
     # ── State media ───────────────────────────────────────────────────────────
     # Including these is a deliberate editorial choice for transparency on
@@ -134,30 +162,35 @@ FEEDS = [
         "https://www.tehrantimes.com/rss",
         "Tehran Times",
         "state",
+        cadence="slow",
     ),
     _rss(
         "press-tv",
         "https://www.presstv.ir/rss.xml",
         "Press TV",
         "state",
+        cadence="slow",
     ),
     _rss(
         "irna",
         "https://en.irna.ir/rss",
         "IRNA",
         "state",
+        cadence="slow",
     ),
     _rss(
         "tass",
         "https://tass.com/rss/v2.xml",
         "TASS",
         "state",
+        cadence="slow",
     ),
     _rss(
         "rt",
         "https://www.rt.com/rss/news/",
         "RT",
         "state",
+        cadence="slow",
     ),
     # Xinhua removed — public RSS endpoint emits articles dated as far back
     # as 2017 with stale URLs that 404. Re-add if/when they ship a real feed.
@@ -166,12 +199,14 @@ FEEDS = [
         "https://english.almayadeen.net/rss",
         "Al Mayadeen",
         "state",
+        cadence="slow",
     ),
     _rss(
         "kremlin",
         "http://en.kremlin.ru/events/news/feed",
         "Kremlin.ru",
         "state",
+        cadence="slow",
     ),
     # ── Primary (government / IGO press) ──────────────────────────────────────
     _rss(
@@ -179,30 +214,35 @@ FEEDS = [
         "https://www.state.gov/rss-feeds/press-releases-feed/",
         "US State Department",
         "primary",
+        cadence="slow",
     ),
     _rss(
         "us-centcom",
         "https://www.centcom.mil/DesktopModules/ArticleCS/RSS.ashx?ContentType=1&Site=836&max=20",
         "US CENTCOM",
         "primary",
+        cadence="slow",
     ),
     _rss(
         "us-dod",
         "https://www.defense.gov/_api/rss/Default.aspx",
         "US Department of Defense",
         "primary",
+        cadence="slow",
     ),
     _rss(
         "reliefweb",
         "https://reliefweb.int/rss.xml",
         "UN OCHA ReliefWeb",
         "primary",
+        cadence="slow",
     ),
     _rss(
         "iaea",
         "https://www.iaea.org/news/feed",
         "IAEA",
         "primary",
+        cadence="rare",
     ),
     # ── Analysis ──────────────────────────────────────────────────────────────
     _rss(
@@ -210,36 +250,42 @@ FEEDS = [
         "https://www.understandingwar.org/news/feed",
         "Institute for the Study of War",
         "analysis",
+        cadence="slow",
     ),
     _rss(
         "brookings-foreign-policy",
         "https://www.brookings.edu/topic/foreign-policy/feed/",
         "Brookings",
         "analysis",
+        cadence="slow",
     ),
     _rss(
         "atlantic-council-ukraine",
         "https://www.atlanticcouncil.org/blogs/ukrainealert/feed/",
         "Atlantic Council UkraineAlert",
         "analysis",
+        cadence="slow",
     ),
     _rss(
         "csis",
         "https://www.csis.org/analysis/feed",
         "CSIS",
         "analysis",
+        cadence="slow",
     ),
     _rss(
         "rusi",
         "https://rusi.org/explore-our-research.rss",
         "RUSI",
         "analysis",
+        cadence="slow",
     ),
     _rss(
         "war-on-the-rocks",
         "https://warontherocks.com/feed/",
         "War on the Rocks",
         "analysis",
+        cadence="slow",
     ),
     # ── US national mainstream ────────────────────────────────────────────────
     # source_kind="wire" is an imperfect fit for broadcast networks (NBC/CBS/ABC)
@@ -259,29 +305,34 @@ FEEDS = [
         "https://feeds.npr.org/1001/rss.xml",
         "NPR",
         "wire",
+        cadence="fast",
     ),
     _rss(
         "pbs-newshour",
         "https://www.pbs.org/newshour/feeds/rss/headlines",
         "PBS NewsHour",
         "wire",
+        cadence="fast",
     ),
     _rss(
         "nbc-news",
         "https://feeds.nbcnews.com/nbcnews/public/news",
         "NBC News",
         "wire",
+        cadence="fast",
     ),
     _rss(
         "cbs-news",
         "https://www.cbsnews.com/latest/rss/main",
         "CBS News",
         "wire",
+        cadence="fast",
     ),
     _rss(
         "abc-news",
         "https://abcnews.go.com/abcnews/topstories",
         "ABC News",
         "wire",
+        cadence="fast",
     ),
 ]
