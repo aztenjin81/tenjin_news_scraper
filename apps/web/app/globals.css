@@ -10,6 +10,9 @@
   --font-mono:
     var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
     "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+  --color-status-ok: var(--status-ok);
+  --color-status-warn: var(--status-warn);
+  --color-status-bad: var(--status-bad);
 }
 
 :root {
@@ -47,6 +50,11 @@
   --src-state-dot: #a04a4a;
   --src-state-bg: rgba(160, 74, 74, 0.20);
   --src-state-fg: #cf8c8c;
+
+  /* Operational status — used by /sources */
+  --status-ok: #3ec77a;
+  --status-warn: #e6a23c;
+  --status-bad: #e0594d;
 }
 
 html,
