@@ -10,7 +10,8 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from tenjin.config import get_settings
 from tenjin.db.session import SessionLocal
 from tenjin.models import FeedFetchLog
-from tenjin.pipeline.health import record_fetch
+from tenjin.pipeline import health as health_mod
+from tenjin.pipeline.health import classify, compute_feed_health, record_fetch
 
 
 async def _db_reachable() -> bool:
@@ -69,11 +70,6 @@ async def test_record_fetch_inserts_one_row(_clean_fetch_log):
     assert row.items_persisted == 3
 
 
-from datetime import UTC, datetime, timedelta
-
-from tenjin.pipeline.health import classify, FeedHealth
-
-
 def _now():
     return datetime.now(UTC)
 
@@ -123,15 +119,6 @@ class _FakeFeed:
 
 async def test_compute_feed_health_classifies_known_feeds(monkeypatch, _clean_fetch_log):
     """Integration: insert log rows, patch the feed list, run compute_feed_health."""
-    from datetime import UTC, datetime, timedelta
-
-    from sqlalchemy import delete
-
-    from tenjin.db.session import SessionLocal
-    from tenjin.models import FeedFetchLog
-    from tenjin.pipeline import health as health_mod
-    from tenjin.pipeline.health import compute_feed_health
-
     fake_feeds = [
         _FakeFeed(name="cf-fast-ok", outlet="Fast OK", source_kind="wire", cadence="fast"),
         _FakeFeed(name="cf-fast-silent", outlet="Fast Silent", source_kind="wire", cadence="fast"),
