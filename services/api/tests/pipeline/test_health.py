@@ -81,7 +81,10 @@ def test_classify_ok_within_one_cadence():
 
 
 def test_classify_lagging_between_one_and_three_cadences():
-    last = _now() - timedelta(hours=1, minutes=30)  # fast = 30 min; 1.5h is between 1x and 3x
+    # fast cadence = 30 min interval; lagging window is (30 min, 90 min].
+    # Use 60 min — comfortably mid-window so clock drift between _now() here
+    # and datetime.now() inside classify() can't push it across either edge.
+    last = _now() - timedelta(minutes=60)
     status = classify(cadence="fast", last_item_at=last, recent_error_streak=0)
     assert status == "lagging"
 
