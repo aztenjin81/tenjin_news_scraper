@@ -25,3 +25,21 @@ def test_at_least_one_feed_per_kind():
     kinds = Counter(getattr(f, "source_kind", None) for f in FEEDS)
     for kind in VALID_KINDS:
         assert kinds[kind] >= 1, f"no feeds with source_kind={kind!r}"
+
+
+def test_all_feeds_have_valid_cadence():
+    from tenjin.sources.feeds import FEEDS
+    valid = {"fast", "normal", "slow", "rare"}
+    for adapter in FEEDS:
+        assert hasattr(adapter, "cadence"), f"{adapter.name} missing cadence"
+        assert adapter.cadence in valid, (
+            f"{adapter.name} has unknown cadence {adapter.cadence!r}"
+        )
+
+
+def test_feeds_use_multiple_cadences():
+    from tenjin.sources.feeds import FEEDS
+    used = {a.cadence for a in FEEDS}
+    assert {"fast", "slow"}.issubset(used), (
+        f"feeds.py should use varied cadences; got {used}"
+    )
