@@ -12,10 +12,11 @@ Candidates surfaced during brainstorming. Each one becomes its own spec → plan
 - **Saved topics + email digest** — auth, per-user topic list, daily/hourly digest. (Roadmap v2.1.)
 - **Article hover preview** — snippet, fetched_at, paywall flag without leaving the feed.
 - **Per-topic OG share image** — generated card from latest 3 headlines.
+- **Outlet-link source labels on `/sources`** — ABC News links to abcnews.go.com, Tehran Times links to tehrantimes.com, etc. Likely add a `home_url` attribute to each adapter (or derive from feed URL netloc as fallback). Worth extending to article rows / `SourcePill` once we ship it for `/sources`.
 
 ## Info tracking / analytics
 
-- **Operational visibility** — scrape health dashboard (feed up/down, parse errors, items/min, last-seen-at) + alerting on silent feeds. *(currently being designed — see `specs/`)*
+- **Operational visibility** — scrape health dashboard (feed up/down, parse errors, items/min, last-seen-at) + alerting on silent feeds. *(public `/sources` page shipped in PRs #35 + #36; internal `/admin` view and silent-feed alerting still deferred — separate specs that reuse the same `feed_fetch_log` telemetry)*
 - **Source reliability scoring** — per-outlet quality signal: publish-lag, dedup-loss rate, broken-link rate, retraction rate. Feeds dashboard and ranking. (Roadmap v1.1.)
 - **Product analytics** — Plausible or PostHog, privacy-friendly, per-topic page views, click-through to outlets.
 - **Search-query log** — record queries that return zero results, surface as a gap-analysis report driving source-acquisition priorities.
