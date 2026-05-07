@@ -18,12 +18,14 @@ from tenjin.sources.hackernews import HackerNewsSearchAdapter
 
 log = structlog.get_logger(__name__)
 
-_CACHE_TTL_SECONDS = 300   # 5 min
+_CACHE_TTL_SECONDS = 300  # 5 min
 _LOCK_TTL_SECONDS = 10
 
 
 def _q_hash(q: str) -> str:
-    norm = q.lower().strip().encode()
+    # Collapse internal whitespace too, so "shooting arizona" and
+    # "shooting  arizona" (two spaces) hit the same cache entry.
+    norm = " ".join(q.lower().split()).encode()
     return hashlib.sha256(norm).hexdigest()[:16]
 
 

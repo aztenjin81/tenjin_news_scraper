@@ -49,8 +49,8 @@ async def test_cache_hit_skips_fetch(fake_redis, fake_search_adapters):
 async def test_lock_contention_skips_fetch(fake_redis, fake_search_adapters):
     """If another worker holds the lock (SET NX returns falsy), don't run adapters."""
     google, hn = fake_search_adapters
-    fake_redis.get = AsyncMock(return_value=None)         # cache miss
-    fake_redis.set = AsyncMock(return_value=False)        # lock NOT acquired (NX failed)
+    fake_redis.get = AsyncMock(return_value=None)  # cache miss
+    fake_redis.set = AsyncMock(return_value=False)  # lock NOT acquired (NX failed)
 
     with (
         patch("tenjin.pipeline.search_fetch.get_redis", return_value=fake_redis),
@@ -69,24 +69,28 @@ async def test_persists_results_from_both_adapters(fake_redis, fake_search_adapt
     fake_redis.get = AsyncMock(return_value=None)
     fake_redis.set = AsyncMock(return_value=True)
     fake_redis.delete = AsyncMock(return_value=1)
-    google.search = AsyncMock(return_value=[
-        RawItem(
-            url="https://example.com/phoenix",
-            title="Phoenix shooting",
-            outlet="AZCentral",
-            source_kind="wire",
-            published_at=datetime.now(UTC),
-        )
-    ])
-    hn.search = AsyncMock(return_value=[
-        RawItem(
-            url="https://example.com/hn",
-            title="Phoenix discussion on HN",
-            outlet="example.com via Hacker News",
-            source_kind="social",
-            published_at=datetime.now(UTC),
-        )
-    ])
+    google.search = AsyncMock(
+        return_value=[
+            RawItem(
+                url="https://example.com/phoenix",
+                title="Phoenix shooting",
+                outlet="AZCentral",
+                source_kind="wire",
+                published_at=datetime.now(UTC),
+            )
+        ]
+    )
+    hn.search = AsyncMock(
+        return_value=[
+            RawItem(
+                url="https://example.com/hn",
+                title="Phoenix discussion on HN",
+                outlet="example.com via Hacker News",
+                source_kind="social",
+                published_at=datetime.now(UTC),
+            )
+        ]
+    )
 
     persist_mock = AsyncMock(return_value=2)
     with (
@@ -112,15 +116,17 @@ async def test_one_adapter_failure_other_still_persists(fake_redis, fake_search_
     fake_redis.set = AsyncMock(return_value=True)
     fake_redis.delete = AsyncMock(return_value=1)
     google.search = AsyncMock(side_effect=Exception("google down"))
-    hn.search = AsyncMock(return_value=[
-        RawItem(
-            url="https://example.com/hn-only",
-            title="Surviving item",
-            outlet="example.com via Hacker News",
-            source_kind="social",
-            published_at=datetime.now(UTC),
-        )
-    ])
+    hn.search = AsyncMock(
+        return_value=[
+            RawItem(
+                url="https://example.com/hn-only",
+                title="Surviving item",
+                outlet="example.com via Hacker News",
+                source_kind="social",
+                published_at=datetime.now(UTC),
+            )
+        ]
+    )
 
     persist_mock = AsyncMock(return_value=1)
     with (
@@ -143,15 +149,17 @@ async def test_redis_unreachable_still_fetches(fake_search_adapters):
     fake_redis.get = AsyncMock(side_effect=Exception("redis down"))
     fake_redis.set = AsyncMock(side_effect=Exception("redis down"))
     fake_redis.delete = AsyncMock(side_effect=Exception("redis down"))
-    google.search = AsyncMock(return_value=[
-        RawItem(
-            url="https://example.com/x",
-            title="X",
-            outlet="AZCentral",
-            source_kind="wire",
-            published_at=datetime.now(UTC),
-        )
-    ])
+    google.search = AsyncMock(
+        return_value=[
+            RawItem(
+                url="https://example.com/x",
+                title="X",
+                outlet="AZCentral",
+                source_kind="wire",
+                published_at=datetime.now(UTC),
+            )
+        ]
+    )
     hn.search = AsyncMock(return_value=[])
 
     persist_mock = AsyncMock(return_value=1)
@@ -172,15 +180,17 @@ async def test_persist_failure_swallowed(fake_redis, fake_search_adapters):
     google, hn = fake_search_adapters
     fake_redis.get = AsyncMock(return_value=None)
     fake_redis.set = AsyncMock(return_value=True)
-    google.search = AsyncMock(return_value=[
-        RawItem(
-            url="https://example.com/x",
-            title="X",
-            outlet="AZCentral",
-            source_kind="wire",
-            published_at=datetime.now(UTC),
-        )
-    ])
+    google.search = AsyncMock(
+        return_value=[
+            RawItem(
+                url="https://example.com/x",
+                title="X",
+                outlet="AZCentral",
+                source_kind="wire",
+                published_at=datetime.now(UTC),
+            )
+        ]
+    )
     hn.search = AsyncMock(return_value=[])
 
     persist_mock = AsyncMock(side_effect=Exception("db down"))

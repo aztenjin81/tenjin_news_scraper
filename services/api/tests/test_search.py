@@ -4,6 +4,7 @@ Skipped when Postgres isn't reachable. CI provides a service container.
 """
 
 from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -79,6 +80,16 @@ async def _seeded_db():
         await session.commit()
 
 
+@pytest.fixture(autouse=True)
+def _stub_fetch_for_query():
+    """Stub the live-fetch augmentation in DB-substring tests so they don't
+    make real network calls. Specific tests for the wiring live below as
+    test_search_with_q_triggers_fetch_for_query.
+    """
+    with patch("tenjin.api.routes.articles.fetch_for_query", AsyncMock(return_value=None)):
+        yield
+
+
 def test_search_finds_match_in_title():
     with TestClient(app) as client:
         r = client.get("/articles", params={"q": "shooting"})
@@ -150,3 +161,38 @@ def test_search_combines_with_topic_filter():
         r = client.get("/articles", params={"q": "shooting", "topic": "iran-us"})
         assert r.status_code == 200
         assert r.json() == []
+
+
+def test_search_with_q_triggers_fetch_for_query():
+    """A query with at least one valid term must call fetch_for_query before
+    running the DB query.
+
+    Note: the autouse `_stub_fetch_for_query` above also patches the same name.
+    `unittest.mock.patch` is a stack — this inner `with patch(...)` supersedes
+    the autouse stub for the duration of the request. Keep the TestClient
+    block strictly inside this `with` so the route sees `mock_fetch`, not the
+    autouse stub.
+    """
+    with patch(
+        "tenjin.api.routes.articles.fetch_for_query",
+        AsyncMock(return_value=None),
+    ) as mock_fetch:
+        with TestClient(app) as client:
+            r = client.get("/articles", params={"q": "shooting"})
+            assert r.status_code == 200
+
+        mock_fetch.assert_awaited_once_with("shooting")
+
+
+def test_search_with_short_query_does_not_call_fetch():
+    """A query that parses to zero terms (e.g. just 'a') skips the fetch."""
+    with patch(
+        "tenjin.api.routes.articles.fetch_for_query",
+        AsyncMock(return_value=None),
+    ) as mock_fetch:
+        with TestClient(app) as client:
+            r = client.get("/articles", params={"q": "a"})
+            assert r.status_code == 200
+            assert r.json() == []
+
+        mock_fetch.assert_not_called()
