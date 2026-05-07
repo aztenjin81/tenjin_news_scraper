@@ -1,4 +1,4 @@
-import type { Article } from "./api";
+import type { Article, FeedHealthReport } from "./api";
 
 const MIN = 60_000;
 
@@ -140,3 +140,55 @@ export function fixtureArticles(slug: string, now: number = Date.now()): Article
       return [];
   }
 }
+
+export const FIXTURE_SOURCES_REPORT: FeedHealthReport = {
+  summary: { total: 5, ok: 3, lagging: 1, silent: 1 },
+  feeds: [
+    {
+      name: "idf-spokesperson",
+      label: "IDF Spokesperson",
+      kind: "primary",
+      cadence: "rare",
+      last_item_at: null,
+      items_24h: 0,
+      status: "silent",
+    },
+    {
+      name: "tehran-times",
+      label: "Tehran Times",
+      kind: "state",
+      cadence: "slow",
+      last_item_at: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
+      items_24h: 4,
+      status: "lagging",
+    },
+    {
+      name: "ap-world",
+      label: "AP",
+      kind: "wire",
+      cadence: "fast",
+      last_item_at: new Date(Date.now() - 1000 * 60 * 4).toISOString(),
+      items_24h: 47,
+      status: "ok",
+    },
+    {
+      name: "al-jazeera",
+      label: "Al Jazeera",
+      kind: "regional",
+      cadence: "normal",
+      last_item_at: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+      items_24h: 28,
+      status: "ok",
+    },
+    {
+      name: "isw",
+      label: "Institute for the Study of War",
+      kind: "analysis",
+      cadence: "slow",
+      last_item_at: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+      items_24h: 1,
+      status: "ok",
+    },
+  ],
+  generated_at: new Date().toISOString(),
+};

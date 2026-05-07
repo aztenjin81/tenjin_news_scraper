@@ -1,4 +1,4 @@
-import { fixtureArticles } from "./fixtures";
+import { fixtureArticles, FIXTURE_SOURCES_REPORT } from "./fixtures";
 import { getTopicBySlug, isKnownTopic, type Topic as TopicMeta } from "./topics";
 import type { SourceKind } from "./sources";
 
@@ -83,4 +83,37 @@ export async function searchArticles(
     // dev fallback — no fixture results for free-text search
   }
   return [];
+}
+
+export type FeedStatus = "ok" | "lagging" | "silent";
+export type FeedCadence = "fast" | "normal" | "slow" | "rare";
+
+export type FeedHealth = {
+  name: string;
+  label: string;
+  kind: string;
+  cadence: FeedCadence;
+  last_item_at: string | null;
+  items_24h: number;
+  status: FeedStatus;
+};
+
+export type FeedHealthReport = {
+  summary: { total: number; ok: number; lagging: number; silent: number };
+  feeds: FeedHealth[];
+  generated_at: string;
+};
+
+export async function fetchSources(): Promise<FeedHealthReport> {
+  try {
+    const res = await fetch(`${API_BASE}/sources`, {
+      next: { revalidate: 30 },
+    });
+    if (res.ok) {
+      return (await res.json()) as FeedHealthReport;
+    }
+  } catch {
+    // backend not reachable in dev — fall back to fixture
+  }
+  return FIXTURE_SOURCES_REPORT;
 }
