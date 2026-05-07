@@ -1,40 +1,47 @@
 # apps/web — CLAUDE.md
 
-Next.js 15 (App Router, TypeScript, Tailwind v4) — public site.
+Next.js 16 (App Router, TypeScript, Tailwind v4) — public site.
 
 ## Layout
 
 ```
 app/
-├── layout.tsx               Root layout, header/footer, fonts, global metadata
-├── page.tsx                 Home — hero (title + lede + search) + Ticker + featured topics
-├── globals.css              Tailwind import + theme tokens + keyframes
-├── about/page.tsx           /about — what we do / don't do, source taxonomy
-├── t/[topic]/page.tsx       Topic feed (SSR + ISR) — eyebrow, H1, LiveIndicator, article list
-└── t/[topic]/not-found.tsx  Custom 404 voice for unknown topics
+├── layout.tsx                       Root layout, header/footer, fonts, global metadata
+├── page.tsx                         Home — hero (title + lede + search) + Ticker + featured topics
+├── globals.css                      Tailwind import + theme tokens + keyframes
+├── about/page.tsx                   /about — what we do / don't do, source taxonomy
+├── search/page.tsx                  /search?q=… — SSR initial results + SearchStream polling
+├── t/[topic]/page.tsx               Topic feed (SSR + ISR) — eyebrow, H1, LiveIndicator, ArticleStream
+├── t/[topic]/not-found.tsx          Custom 404 voice for unknown topics
+├── api/articles/route.ts            Same-origin proxy → backend /articles (used by SearchStream)
+├── api/quotes/route.ts              Same-origin proxy → backend market quotes (used by Ticker)
+└── stream/topic/[slug]/route.ts     Same-origin SSE proxy → backend /stream/topic/{slug}
 
 components/
-├── Header.tsx               Logomark + wordmark text + nav links
+├── Header.tsx                       Logomark + wordmark text + nav links
 ├── Footer.tsx
-├── Logomark.tsx             Inline SVG (six bars, rightmost in --accent)
-├── SearchBar.tsx            (client) free-text → /t/<slug>
-├── Ticker.tsx               (client) postage-stamp markets grid with sparklines
-├── TopicTile.tsx            Featured-topic card
-├── ArticleRow.tsx           Single headline row with SourcePill + meta
-├── SourcePill.tsx           Color-coded badge per source kind
-├── LiveIndicator.tsx        (client) pulsing dot + "Updated Xs ago"
+├── Logomark.tsx                     Inline SVG (six bars, rightmost in --accent)
+├── SearchBar.tsx                    (client) free-text → /search?q=<query>
+├── SearchStream.tsx                 (client) polls /api/articles?q every 30s, prepends new matches
+├── ArticleStream.tsx                (client) subscribes to SSE proxy, prepends new articles, dedupes by id
+├── Ticker.tsx                       (client) postage-stamp markets grid with sparklines
+├── TopicTile.tsx                    Featured-topic card
+├── ArticleRow.tsx                   Single headline row with SourcePill + meta
+├── SourcePill.tsx                   Color-coded badge per source kind
+├── LiveIndicator.tsx                (client) pulsing dot + "Updated Xs ago"
 └── EmptyState.tsx
 
 lib/
-├── api.ts                   Article/Topic types + fetcher with fixture fallback
-├── topics.ts                TOPICS list, slugify, header subset
-├── sources.ts               SourceKind taxonomy + labels/examples
-└── fixtures.ts              Demo articles for the design preview
+├── api.ts                           Article/Topic types + fetchers (incl. searchArticles)
+├── topics.ts                        TOPICS list, slugify, header subset
+├── sources.ts                       SourceKind taxonomy + labels/examples
+├── quotes.ts                        Yahoo Finance quote shape + fetch helpers
+└── fixtures.ts                      Demo articles for the design preview
 
 public/
-├── logomark.svg             Six-bar logomark
-├── wordmark.svg             Logomark + "Tenjin News" text
-└── favicon.svg              Square favicon
+├── logomark.svg                     Six-bar logomark
+├── wordmark.svg                     Logomark + "Tenjin News" text
+└── favicon.svg                      Square favicon
 ```
 
 ## Conventions
@@ -50,6 +57,7 @@ public/
 - **Metadata.** Every routable page exports `generateMetadata` (or static `metadata`). Topic and about pages set `alternates.canonical`.
 - **Data fetching** goes through `lib/api.ts`. Pages don't call `fetch` directly. The client falls back to `lib/fixtures.ts` when the backend is unreachable so the site renders in dev.
 - **External links.** Always `target="_blank" rel="noopener noreferrer"`.
+- **Live updates.** Pages render an SSR'd initial list, then hand off to a client streamer. Topic pages use `ArticleStream` over SSE (`/stream/topic/[slug]/route.ts` proxies to the API container internally — browser stays same-origin, no CORS, no public API URL). Search uses `SearchStream` polling `/api/articles?q=` every 30s. Both dedupe new items against the SSR list by article `id`. Use `key={…}` on the parent so navigating to a new query/topic remounts the streamer cleanly.
 
 ## Voice
 
