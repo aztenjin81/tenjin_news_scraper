@@ -1,5 +1,6 @@
 """Tests for pipeline.health. Skipped automatically when Postgres isn't reachable."""
 
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -110,3 +111,72 @@ def test_classify_ok_when_four_errors_then_recovery():
     last = _now() - timedelta(minutes=2)
     status = classify(cadence="fast", last_item_at=last, recent_error_streak=4)
     assert status == "ok"
+
+
+@dataclass
+class _FakeFeed:
+    name: str
+    outlet: str
+    source_kind: str
+    cadence: str
+
+
+async def test_compute_feed_health_classifies_known_feeds(monkeypatch, _clean_fetch_log):
+    """Integration: insert log rows, patch the feed list, run compute_feed_health."""
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import delete
+
+    from tenjin.db.session import SessionLocal
+    from tenjin.models import FeedFetchLog
+    from tenjin.pipeline import health as health_mod
+    from tenjin.pipeline.health import compute_feed_health
+
+    fake_feeds = [
+        _FakeFeed(name="cf-fast-ok", outlet="Fast OK", source_kind="wire", cadence="fast"),
+        _FakeFeed(name="cf-fast-silent", outlet="Fast Silent", source_kind="wire", cadence="fast"),
+        _FakeFeed(name="cf-rare-zero", outlet="Rare Zero", source_kind="primary", cadence="rare"),
+    ]
+    monkeypatch.setattr(health_mod, "_canonical_feeds", lambda: fake_feeds)
+
+    now = datetime.now(UTC)
+    async with SessionLocal() as session:
+        await session.execute(
+            delete(FeedFetchLog).where(FeedFetchLog.source.like("cf-%"))
+        )
+        session.add_all([
+            FeedFetchLog(
+                source="cf-fast-ok", fetched_at=now - timedelta(minutes=5),
+                duration_ms=1, error_kind="none",
+                items_yielded=2, items_persisted=2,
+            ),
+            FeedFetchLog(
+                source="cf-fast-silent", fetched_at=now - timedelta(hours=10),
+                duration_ms=1, error_kind="none",
+                items_yielded=1, items_persisted=1,
+            ),
+            # cf-rare-zero: no rows at all — should classify as silent
+        ])
+        await session.commit()
+
+    async with SessionLocal() as session:
+        report = await compute_feed_health(session)
+
+    by_name = {f.name: f for f in report.feeds}
+    assert by_name["cf-fast-ok"].status == "ok"
+    assert by_name["cf-fast-silent"].status == "silent"
+    assert by_name["cf-rare-zero"].status == "silent"
+    assert by_name["cf-rare-zero"].last_item_at is None
+    assert report.summary["total"] == 3
+    assert report.summary["silent"] == 2
+    assert report.summary["ok"] == 1
+    # Sort order: silent rows come before ok rows
+    assert report.feeds[0].status == "silent"
+    assert report.feeds[-1].status == "ok"
+
+    # Cleanup
+    async with SessionLocal() as session:
+        await session.execute(
+            delete(FeedFetchLog).where(FeedFetchLog.source.like("cf-%"))
+        )
+        await session.commit()
