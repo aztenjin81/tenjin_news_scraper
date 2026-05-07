@@ -67,9 +67,7 @@ class GoogleNewsSearchAdapter:
         for entry in parsed.entries:
             outlet = _extract_outlet(entry)
             title = _strip_outlet_suffix(entry.get("title", "").strip(), outlet)
-            published = _to_datetime(
-                entry.get("published_parsed") or entry.get("updated_parsed")
-            )
+            published = _to_datetime(entry.get("published_parsed") or entry.get("updated_parsed"))
             link = entry.get("link", "")
             if not link or not title:
                 continue

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pytest_httpx import HTTPXMock
 
-from tenjin.sources.google_news import GoogleNewsSearchAdapter, _DEFAULT_UA
+from tenjin.sources.google_news import _DEFAULT_UA, GoogleNewsSearchAdapter
 
 FIXTURES = Path(__file__).parent / "fixtures" / "google_news"
 
