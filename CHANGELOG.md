@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- Public `/sources` coverage-transparency page: `feed_fetch_log` telemetry table records one row per scrape attempt (source, fetched_at, duration_ms, http_status, error_kind, items_yielded/persisted) with 30-day retention via `pipeline.prune.prune_old_fetch_logs` on lifespan startup; every adapter declares a `cadence` of `fast` / `normal` / `slow` / `rare`; `pipeline.health.classify` rule (ok / lagging / silent) and `compute_feed_health` filtered-aggregate query power a new `GET /sources` endpoint with a 30s in-process cache; new SSR `/sources` page renders a status-first layout (counts hero, silent + lagging sections, full list grouped by source kind), `StatusDot` component, `--status-{ok,warn,bad}` tokens, and a header nav link (#35, #36)
 - Ad-hoc full-text search: `/articles?q=<phrase>` ANDs ILIKE matches across title and snippet (whitespace-tokenized, drops <2-char tokens, caps at 8 terms); new `/search` page renders SSR results and a client `SearchStream` polls every 30s for fresh matches via a same-origin Next.js proxy at `/api/articles` (#28)
 - SSE push for near-real-time topic feeds: `persist_items()` publishes new articles to Redis pubsub `topic:{slug}` after commit; `/stream/topic/{slug}` subscribes and forwards SSE frames; frontend `ArticleStream` subscribes via a same-origin Next.js proxy and prepends new items, deduping by id. Falls back to keepalive-only if Redis is unreachable so clients don't reconnect-storm (#27)
 - Ticker shows attribution + delay: each symbol links to its Yahoo Finance quote page; new footer line displays "Data: Yahoo Finance" and "Delayed up to N min" / "Real time" derived from upstream `meta.exchangeDataDelayedBy` (#26)
@@ -16,6 +17,7 @@
 - Dependabot now ignores `eslint@10` (blocked by `eslint-plugin-react@7.37.5` capping at eslint^9.7), `vitest@4.1+` (requires vite^6 peer), and `@types/node@25` (kept failing the bundled dev-group PR) — stops the recurring failed PRs (#10, #12, #24)
 
 ### Fixed
+- Windows local-dev compatibility for psycopg async: `WindowsSelectorEventLoopPolicy` set in `db/migrations/env.py` (alembic) and `tests/conftest.py` (pytest); `uvicorn ... --reload` is required on Windows because uvicorn otherwise picks `ProactorEventLoop` which psycopg can't use. All fixes are `sys.platform == "win32"` gated; Linux/CI is unaffected (#36)
 - RSS adapter parses ISO 8601 / Atom dates so `COALESCE(published_at, fetched_at)` sort actually uses publish time. Old `_parse_date` used `email.utils.parsedate_to_datetime` (RFC 2822 only) and silently returned `None` for Atom feeds. Now reads `entry.published_parsed` / `entry.updated_parsed` (already normalized by feedparser) and converts to aware UTC. Regression test asserts non-NULL `published_at` on Atom-shaped fixtures (#25)
 - `pnpm install --frozen-lockfile` removed from CI so Dependabot npm PRs can pass (lockfile is updated on the branch, not pre-frozen)
 - ruff B008 false positive for FastAPI `Query()` defaults suppressed via `ignore = ["B008"]`

@@ -51,7 +51,7 @@ pnpm dev
 
 ## When adding a feature
 
-- **New source**: add an adapter under `services/api/tenjin/sources/` implementing `SourceAdapter` and register the adapter class in `sources/registry.py`. For RSS/Atom feeds, also add the feed URL to `sources/feeds.py` (the central feed list iterated by `scrape.run_all()`). Add a fixture-backed test in `services/api/tests/sources/`.
+- **New source**: add an adapter under `services/api/tenjin/sources/` implementing `SourceAdapter` (including a `cadence` of `fast`/`normal`/`slow`/`rare` so the `/sources` page can classify health correctly) and register the adapter class in `sources/registry.py`. For RSS/Atom feeds, also add the feed URL to `sources/feeds.py` (the central feed list iterated by `scrape.run_all()`) with the `cadence=` kwarg set. Add a fixture-backed test in `services/api/tests/sources/`.
 - **New API route**: add to `services/api/tenjin/api/routes/`. Keep route handlers thin — push logic into `pipeline/` or service modules.
 - **New page**: add under `apps/web/app/`. Pages that should be SEO-indexed must export `generateMetadata` and use SSR (no `"use client"` at the page root).
 - **Schema change**: edit the SQLAlchemy model, then `alembic revision --autogenerate -m "..."`, review the generated migration, commit both.
