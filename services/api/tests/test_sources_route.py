@@ -16,13 +16,22 @@ def report():
         summary={"total": 2, "ok": 1, "lagging": 0, "silent": 1},
         feeds=[
             FeedHealth(
-                name="alpha", label="Alpha", kind="wire", cadence="fast",
-                last_item_at=None, items_24h=0, status="silent",
+                name="alpha",
+                label="Alpha",
+                kind="wire",
+                cadence="fast",
+                last_item_at=None,
+                items_24h=0,
+                status="silent",
             ),
             FeedHealth(
-                name="beta", label="Beta", kind="wire", cadence="fast",
+                name="beta",
+                label="Beta",
+                kind="wire",
+                cadence="fast",
                 last_item_at=datetime.now(UTC) - timedelta(minutes=5),
-                items_24h=12, status="ok",
+                items_24h=12,
+                status="ok",
             ),
         ],
         generated_at=datetime.now(UTC),
@@ -31,6 +40,7 @@ def report():
 
 def test_sources_endpoint_shape(report):
     from tenjin.api.routes import sources as routes_mod
+
     routes_mod._cache_clear()
 
     app = create_app()
@@ -46,12 +56,19 @@ def test_sources_endpoint_shape(report):
     assert len(data["feeds"]) == 2
     f0 = data["feeds"][0]
     assert set(f0.keys()) == {
-        "name", "label", "kind", "cadence", "last_item_at", "items_24h", "status",
+        "name",
+        "label",
+        "kind",
+        "cadence",
+        "last_item_at",
+        "items_24h",
+        "status",
     }
 
 
 def test_sources_endpoint_caches(report):
     from tenjin.api.routes import sources as routes_mod
+
     routes_mod._cache_clear()
 
     mock_compute = AsyncMock(return_value=report)

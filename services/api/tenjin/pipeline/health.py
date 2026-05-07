@@ -101,12 +101,11 @@ def _canonical_feeds():
     name / outlet / source_kind / cadence. Wrapped in a function so tests
     can monkeypatch it without touching FEEDS."""
     from tenjin.sources.feeds import FEEDS  # late import to avoid cycles
+
     return list(FEEDS)
 
 
-async def _recent_error_streaks(
-    session: AsyncSession, names: list[str]
-) -> dict[str, int]:
+async def _recent_error_streaks(session: AsyncSession, names: list[str]) -> dict[str, int]:
     """For each source, count the consecutive error rows from newest backwards
     until the first non-error row (or until the configured threshold).
     Returns {source: streak_length}."""
@@ -115,13 +114,17 @@ async def _recent_error_streaks(
         return out
     for name in names:
         rows = (
-            await session.execute(
-                select(FeedFetchLog.error_kind)
-                .where(FeedFetchLog.source == name)
-                .order_by(desc(FeedFetchLog.fetched_at))
-                .limit(ERROR_STREAK_THRESHOLD)
+            (
+                await session.execute(
+                    select(FeedFetchLog.error_kind)
+                    .where(FeedFetchLog.source == name)
+                    .order_by(desc(FeedFetchLog.fetched_at))
+                    .limit(ERROR_STREAK_THRESHOLD)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         streak = 0
         for kind in rows:
             if kind == "none":

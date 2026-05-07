@@ -128,22 +128,28 @@ async def test_compute_feed_health_classifies_known_feeds(monkeypatch, _clean_fe
 
     now = datetime.now(UTC)
     async with SessionLocal() as session:
-        await session.execute(
-            delete(FeedFetchLog).where(FeedFetchLog.source.like("cf-%"))
+        await session.execute(delete(FeedFetchLog).where(FeedFetchLog.source.like("cf-%")))
+        session.add_all(
+            [
+                FeedFetchLog(
+                    source="cf-fast-ok",
+                    fetched_at=now - timedelta(minutes=5),
+                    duration_ms=1,
+                    error_kind="none",
+                    items_yielded=2,
+                    items_persisted=2,
+                ),
+                FeedFetchLog(
+                    source="cf-fast-silent",
+                    fetched_at=now - timedelta(hours=10),
+                    duration_ms=1,
+                    error_kind="none",
+                    items_yielded=1,
+                    items_persisted=1,
+                ),
+                # cf-rare-zero: no rows at all — should classify as silent
+            ]
         )
-        session.add_all([
-            FeedFetchLog(
-                source="cf-fast-ok", fetched_at=now - timedelta(minutes=5),
-                duration_ms=1, error_kind="none",
-                items_yielded=2, items_persisted=2,
-            ),
-            FeedFetchLog(
-                source="cf-fast-silent", fetched_at=now - timedelta(hours=10),
-                duration_ms=1, error_kind="none",
-                items_yielded=1, items_persisted=1,
-            ),
-            # cf-rare-zero: no rows at all — should classify as silent
-        ])
         await session.commit()
 
     async with SessionLocal() as session:
@@ -163,7 +169,5 @@ async def test_compute_feed_health_classifies_known_feeds(monkeypatch, _clean_fe
 
     # Cleanup
     async with SessionLocal() as session:
-        await session.execute(
-            delete(FeedFetchLog).where(FeedFetchLog.source.like("cf-%"))
-        )
+        await session.execute(delete(FeedFetchLog).where(FeedFetchLog.source.like("cf-%")))
         await session.commit()
