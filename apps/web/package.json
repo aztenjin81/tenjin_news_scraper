@@ -12,7 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "next": "16.2.4",
+    "next": "16.2.6",
     "react": "19.2.5",
     "react-dom": "19.2.5"
   },
@@ -22,7 +22,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "eslint": "^9.15.0",
-    "eslint-config-next": "16.2.4",
+    "eslint-config-next": "16.2.6",
     "postcss": "^8.4.49",
     "tailwindcss": "^4.0.0",
     "typescript": "^6.0.3",
